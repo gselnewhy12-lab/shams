@@ -10,7 +10,7 @@
 <link rel="manifest" href="manifest.webmanifest" crossorigin="use-credentials">
 <link rel="apple-touch-icon" href="icon-192.png">
 <link rel="icon" href="icon-192.png">
-<title>صرف سريع بالاسكانر</title>
+<title>صرف وإضافة بالاسكانر</title>
 <style>
 :root{--navy:#1F3B73;--org:#D9661F;--bg:#F3F5F9;--card:#fff;--ink:#1b2433;--mut:#5B6475;--line:#D5DBE5;--ok:#1E7B45;--okbg:#E3F4EA;--bad:#B3261E;--badbg:#FCE8E6;--warn:#8A5A00;--warnbg:#FFF4D6}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -63,6 +63,11 @@ nav button.on{color:var(--navy);font-weight:700;box-shadow:inset 0 3px 0 var(--o
 .op .acts{display:flex;gap:6px;margin-top:8px}.op .acts button{flex:1;padding:9px;font-size:14px}
 .st{display:inline-block;font-size:12px;padding:2px 8px;border-radius:99px;font-weight:700}
 .st.new{background:#FDEBDD;color:#9a4511}.st.exp{background:#E8ECF4;color:#3a4660}
+.kind{display:inline-block;font-size:12px;padding:1px 8px;border-radius:6px;font-weight:700;margin-left:4px}.kind.iss{background:#FDEBDD;color:#9a4511}.kind.rcv{background:#E3F4EA;color:#1E7B45}
+.modes{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px}.modes button{border:2px solid var(--line);background:#fff;color:var(--mut);font:inherit;font-weight:700;font-size:17px;padding:12px 6px;border-radius:12px}
+.modes button.on[data-m=issue]{border-color:var(--org);color:#9a4511;background:#FDEBDD}.modes button.on[data-m=receipt]{border-color:var(--ok);color:var(--ok);background:var(--okbg)}
+body.rcv #scanBtn{background:var(--ok)}
+.op.rcv{border-right-color:var(--ok)}
 .muted{color:var(--mut);font-size:13px;line-height:1.6}
 .tabs{display:flex;gap:6px;margin-bottom:10px}.tabs button{flex:1;padding:8px;font-size:14px;background:#E8ECF4;color:var(--navy)}.tabs button.on{background:var(--navy);color:#fff}
 .hide{display:none!important}
@@ -81,7 +86,7 @@ nav button.on{color:var(--navy);font-weight:700;box-shadow:inset 0 3px 0 var(--o
 </head>
 <body>
 <header>
-  <h1>صرف سريع بالاسكانر</h1>
+  <h1>صرف وإضافة بالاسكانر</h1>
   <div class="sub"><span id="netPill" class="pill">…</span><span id="offPill" class="pill off">جاري التجهيز للعمل بدون نت…</span><span id="catPill" class="pill"></span></div>
 </header>
 
@@ -102,6 +107,7 @@ nav button.on{color:var(--navy);font-weight:700;box-shadow:inset 0 3px 0 var(--o
     <div id="setupMsg"></div>
   </div>
   <div class="card" id="scanCard">
+    <div class="modes" role="group" aria-label="نوع العملية"><button data-m="issue" class="on">📤 صرف</button><button data-m="receipt">📥 إضافة (توريد)</button></div>
     <button class="btn big org" id="scanBtn">📷 اسكان باركود</button>
     <div class="row" style="margin-top:8px">
       <button class="btn ghost" id="photoBtn">🖼️ صوّر الليبل (بديل)</button>
@@ -125,21 +131,37 @@ nav button.on{color:var(--navy);font-weight:700;box-shadow:inset 0 3px 0 var(--o
 
     <div id="fields">
       <div class="row">
-        <div><label>الكمية المصروفة *</label><input id="fQty" type="number" inputmode="decimal" min="0" step="any"></div>
+        <div><label id="qtyLbl">الكمية المصروفة *</label><input id="fQty" type="number" inputmode="decimal" min="0" step="any"></div>
         <div><label>التاريخ</label><input id="fDate" type="date"></div>
       </div>
+      <div id="issueFields">
       <label>المستلم / الجهة *</label>
       <input id="fRcpt" list="rcptList" autocomplete="off">
       <datalist id="rcptList"></datalist>
       <label>رقم طلب الصرف</label>
       <input id="fReq" autocomplete="off" inputmode="text">
+      </div>
+      <div id="rcvFields" class="hide">
+      <label for="fType">نوع الحركة</label>
+      <select id="fType"><option>إذن استلام</option><option>اضافه</option><option>تحويل من</option></select>
+      <label for="fPo">رقم أمر التوريد PO <span id="poReq">*</span></label>
+      <input id="fPo" list="poList" autocomplete="off" inputmode="numeric" class="code">
+      <datalist id="poList"></datalist>
+      <div id="poInfo"></div>
+      <div id="poQtyWrap" class="hide"><label for="fPoQty">كمية أمر التوريد (اختياري — لـ PO جديد مش في الشيت)</label><input id="fPoQty" type="number" inputmode="decimal" min="0" step="any"></div>
+      <label for="fSup">المورد / الجهة *</label>
+      <input id="fSup" list="supList" autocomplete="off">
+      <datalist id="supList"></datalist>
+      <label for="fDn">رقم إذن التسليم / الاستلام *</label>
+      <input id="fDn" autocomplete="off" inputmode="numeric" class="code">
+      </div>
       <div id="unkConfirm" class="chk hide"><input type="checkbox" id="unkChk"><span>أنا متأكد إن الكود ده صح وعايز أحفظه رغم إنه مش في دليل الأكواد (هيظهر في الشيت "⚠ الكود مش موجود في الرصيد")</span></div>
       <div id="formErr" class="alert bad hide"></div>
       <div class="row" style="margin-top:12px">
         <button class="btn org" id="saveBtn">💾 حفظ على الموبايل</button>
         <button class="btn ghost" id="cancelBtn" style="flex:0 0 32%">إلغاء</button>
       </div>
-      <p class="muted" style="margin:8px 0 0">الحفظ هنا على الموبايل بس. العملية مش بتتسجل في شيت الإكسيل ولا على السيستم لوحدها — لازم تصدّرها وتلصقها في الشيت.</p>
+      <p class="muted" style="margin:8px 0 0">الحفظ هنا على الموبايل بس. العملية مش بتتسجل في شيت الإكسيل لوحدها — لازم تصدّرها وتلصقها في الشيت (الصرف في «صرف سريع بالاسكانر» والإضافة في «المدخلات»).</p>
     </div>
   </div>
 </section>
@@ -157,14 +179,14 @@ nav button.on{color:var(--navy);font-weight:700;box-shadow:inset 0 3px 0 var(--o
     <p class="muted" id="expInfo"></p>
     <button class="btn big" id="exportBtn">📤 صدّر العمليات الجديدة (ملف Excel)</button>
     <button class="btn ghost" id="exportAllBtn" style="width:100%;margin-top:8px">صدّر كل العمليات اللي على الموبايل</button>
-    <p class="muted">الملف فيه ورقة «للصق في الشيت» بنفس أعمدة الشيت (C إلى K)، وورقة «مراجعة» فيها كل التفاصيل. التصدير <b>مش</b> بيضيف حاجة للشيت لوحده.</p>
+    <p class="muted">الملف فيه 3 ورقات: «صرف — للصق في صرف سريع» (أعمدة C إلى K)، و«إضافة — للصق في المدخلات» (أعمدة B إلى N)، و«مراجعة». التصدير <b>مش</b> بيضيف حاجة للشيت لوحده.</p>
   </div>
   <div class="card">
     <h3 style="margin:0 0 6px;color:var(--navy)">تحديث دليل الأكواد والأرصدة</h3>
     <p class="muted" id="catInfo"></p>
     <button class="btn ghost" id="catBtn" style="width:100%">📥 اختار نسخة ملف المخزن (.xlsx) لتحديث الدليل</button>
     <input type="file" id="catInput" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" class="hide">
-    <p class="muted">بيقرا ورقة «الرصيد والجرد» (الكود، الاسم، الوحدة، الرصيد الدفتري، صرف لم يُسجل، الموقع) وأسماء العمال من ورقة «العمال». البيانات بتتحفظ على الموبايل ده بس ومش بتترفع على النت، والملف نفسه مش بيتعدّل. لازم يكون .xlsx محفوظ من Excel.</p>
+    <p class="muted">بيقرا ورقة «الرصيد والجرد» (الكود، الاسم، الوحدة، الرصيد الدفتري، صرف لم يُسجل، الموقع)، وأسماء العمال من «العمال»، وأوامر التوريد من «أوامر التوريد». البيانات بتتحفظ على الموبايل ده بس ومش بتترفع على النت، والملف نفسه مش بيتعدّل. لازم يكون .xlsx محفوظ من Excel.</p>
     <div id="catMsg"></div>
   </div>
   <div class="card">
@@ -10285,7 +10307,7 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
 /******/ ])["default"];
 });</script>
 <script>
-const APP_VER = "20261012p";
+const APP_VER = "20261014r";
 </script>
 <script>
 'use strict';
@@ -10452,6 +10474,15 @@ $('#searchInput').oninput = () => {
 
 // ---------------- form ----------------
 let cur = null; // {raw, code, src, editId, dupAck}
+let mode = 'issue'; try { if (localStorage.getItem('shams-mode') === 'receipt') mode = 'receipt'; } catch (e) {}
+const isRcv = () => mode === 'receipt';
+function setMode(m, keep) { mode = m; try { localStorage.setItem('shams-mode', m); } catch (e) {}
+  document.querySelectorAll('.modes button').forEach(b => b.classList.toggle('on', b.dataset.m === m)); document.body.classList.toggle('rcv', m === 'receipt');
+  $('#scanBtn').textContent = m === 'receipt' ? '📷 اسكان صنف التوريدة' : '📷 اسكان باركود';
+  if (!keep) { cur = null; $('#formCard').classList.add('hide'); } }
+document.querySelectorAll('.modes button').forEach(b => b.onclick = () => setMode(b.dataset.m));
+let POS = []; // [{po, code, sup, qty, rec, rem}] from «أوامر التوريد»
+const opKind = o => o.kind || 'issue';
 let lastScan = {code: null, t: 0};
 async function onDecoded(raw, src) {
   const code = normCode(raw);
@@ -10468,14 +10499,17 @@ async function onDecoded(raw, src) {
 function openForm() {
   $('#formCard').classList.remove('hide'); $('#formErr').classList.add('hide');
   $('#fQty').value = ''; $('#fReq').value = ''; $('#fDate').value = today(); $('#unkChk').checked = false;
-  getMeta('lastRcpt').then(v => { if (v && !$('#fRcpt').value) $('#fRcpt').value = v; });
-  $('#saveBtn').textContent = '💾 حفظ على الموبايل'; $('#saveBtn').disabled = false;
+  $('#fPo').value = ''; $('#fSup').value = ''; $('#fDn').value = ''; $('#fPoQty').value = ''; $('#fType').value = 'إذن استلام'; $('#poInfo').innerHTML = ''; $('#poQtyWrap').classList.add('hide');
+  $('#issueFields').classList.toggle('hide', isRcv()); $('#rcvFields').classList.toggle('hide', !isRcv());
+  $('#qtyLbl').textContent = isRcv() ? 'الكمية المستلمة *' : 'الكمية المصروفة *';
+  if (!isRcv()) getMeta('lastRcpt').then(v => { if (v && !$('#fRcpt').value) $('#fRcpt').value = v; });
+  $('#saveBtn').textContent = isRcv() ? '💾 حفظ الإضافة على الموبايل' : '💾 حفظ على الموبايل'; $('#saveBtn').disabled = false;
 }
 $('#lookupBtn').onclick = () => { cur = cur || {}; cur.code = normCode($('#fCode').value); $('#fCode').value = cur.code; cur.dupAck = false; lookup(true); };
 $('#fCode').onchange = $('#lookupBtn').onclick;
 $('#cancelBtn').onclick = () => { cur = null; $('#formCard').classList.add('hide'); };
 
-async function localPending(code, exceptId) { const ops = await allOps(); return ops.filter(o => o.code === code && o.status === 'new' && o.id !== exceptId); }
+async function localPending(code, exceptId, kind) { const ops = await allOps(); return ops.filter(o => o.code === code && o.status === 'new' && o.id !== exceptId && (!kind || opKind(o) === kind)); }
 async function lookup(withSound) {
   const code = cur.code; const r = CAT.get(code); const box = $('#lookupBox');
   cur.known = !!r;
@@ -10488,27 +10522,53 @@ async function lookup(withSound) {
   } else {
     if (withSound) beep(true);
     $('#unkConfirm').classList.add('hide');
-    const pend = await localPending(code, cur.editId); const pq = pend.reduce((a, o) => a + Number(o.qty || 0), 0);
-    const avail = (r[3] ?? 0) - (r[5] || 0) - pq;
+    const sum = a => a.reduce((x, o) => x + Number(o.qty || 0), 0);
+    const pi = sum(await localPending(code, cur.editId, 'issue')), pr = sum(await localPending(code, cur.editId, 'receipt'));
+    const avail = (r[3] ?? 0) - (r[5] || 0) - pi + pr;
     box.innerHTML = `<div class="item"><div class="alert ok" style="margin:6px 0"><b>✓ ${esc(r[1])}</b><span class="code">${esc(code)}</span> · الموقع: ${esc(r[6] || '—')}</div>
       <div class="kv"><div><small>الوحدة</small><span>${esc(r[2] || '—')}</span></div><div><small>الرصيد الدفتري</small><span>${fmt(r[3])}</span></div><div><small>صرف لم يُسجل (في الشيت)</small><span>${fmt(r[5] || 0)}</span></div>
-      <div><small>محفوظ على الموبايل</small><span>${fmt(pq)}</span></div><div class="hi" style="grid-column:span 2"><small>المتاح تقريبًا بعد الصرف المعلّق</small><span>${fmt(avail)} ${esc(r[2] || '')}</span></div></div>
+      <div><small>صرف على الموبايل</small><span>${fmt(pi)}</span></div><div><small>إضافة على الموبايل</small><span>${fmt(pr)}</span></div><div class="hi"><small>المتاح تقريبًا</small><span>${fmt(avail)} ${esc(r[2] || '')}</span></div></div>
       ${r[4] !== null && r[4] !== undefined ? `<p class="muted">الجرد الفعلي في الملف: ${fmt(r[4])}</p>` : ''}
       <p class="muted">الأرصدة من الدليل بتاريخ ${esc(CAT_DATE)} — مش لحظية.</p></div>`;
     cur.avail = avail;
   }
+  if (isRcv()) fillPoList(code);
   // duplicate check
-  const pend = await localPending(code, cur.editId);
+  const pend = await localPending(code, cur.editId, mode);
   const dup = $('#dupBox');
   if (pend.length && !cur.editId) {
-    dup.innerHTML = `<div class="alert warn"><b>⚠ الكود ده متسجل قبل كده على الموبايل ولسه ما اتصدّرش</b>${pend.map(o => `• ${fmt(o.qty)} — ${esc(o.rcpt)}${o.req ? ' — طلب ' + esc(o.req) : ''} (${esc(o.date)})`).join('<br>')}
-      <div class="row" style="margin-top:8px"><button class="btn ghost" id="dupEdit">عدّل القديمة</button><button class="btn org" id="dupNew">دي عملية صرف تانية</button></div></div>`;
+    dup.innerHTML = `<div class="alert warn"><b>⚠ الصنف ده ${isRcv() ? 'اتضاف' : 'اتصرف'} قبل كده على الموبايل ولسه ما اتصدّرش</b>${pend.map(o => opKind(o) === 'receipt' ? `• ${fmt(o.qty)} — PO ${esc(o.po || '—')} — إذن ${esc(o.dn)} (${esc(o.date)})` : `• ${fmt(o.qty)} — ${esc(o.rcpt)}${o.req ? ' — طلب ' + esc(o.req) : ''} (${esc(o.date)})`).join('<br>')}
+      <div class="row" style="margin-top:8px"><button class="btn ghost" id="dupEdit">عدّل القديمة</button><button class="btn org" id="dupNew">${isRcv() ? 'دي إضافة تانية' : 'دي عملية صرف تانية'}</button></div></div>`;
     cur.dupAck = false; $('#saveBtn').disabled = true;
     $('#dupEdit').onclick = () => editOp(pend[pend.length - 1].id);
-    $('#dupNew').onclick = () => { cur.dupAck = true; dup.innerHTML = '<div class="alert warn">هتتحفظ كعملية صرف منفصلة.</div>'; $('#saveBtn').disabled = false; $('#fQty').focus(); };
+    $('#dupNew').onclick = () => { cur.dupAck = true; dup.innerHTML = `<div class="alert warn">هتتحفظ ك${isRcv() ? 'إضافة' : 'عملية صرف'} منفصلة.</div>`; $('#saveBtn').disabled = false; $('#fQty').focus(); };
   } else { dup.innerHTML = ''; $('#saveBtn').disabled = false; }
 }
 
+function fillPoList(code) {
+  const mine = POS.filter(p => p.code === code);
+  $('#poList').innerHTML = mine.map(p => `<option value="${esc(p.po)}">${esc(p.sup)} — متبقي ${fmt(p.rem)}</option>`).join('');
+  const open = mine.filter(p => p.rem > 1e-9);
+  if (open.length === 1 && !$('#fPo').value && !cur.editId) { $('#fPo').value = open[0].po; }
+  poInfo();
+}
+async function poInfo() {
+  const po = $('#fPo').value.trim(), box = $('#poInfo'); cur && (cur.po = null);
+  $('#poReq').textContent = $('#fType').value === 'إذن استلام' ? '*' : '(اختياري)';
+  if (!po || !cur) { box.innerHTML = ''; $('#poQtyWrap').classList.add('hide'); return; }
+  const p = POS.find(x => String(x.po) === po && x.code === cur.code);
+  if (!p) { const other = POS.some(x => String(x.po) === po);
+    box.innerHTML = `<div class="alert warn">${other ? 'أمر التوريد ده موجود في الشيت بس مش للصنف ده.' : 'أمر التوريد ده مش في شيت «أوامر التوريد» اللي على الموبايل.'} اتأكد من الرقم. لو PO جديد اكتب كميته (اختياري).</div>`;
+    $('#poQtyWrap').classList.remove('hide'); return; }
+  $('#poQtyWrap').classList.add('hide');
+  const pend = (await localPending(cur.code, cur.editId, 'receipt')).filter(o => String(o.po) === po).reduce((a, o) => a + Number(o.qty || 0), 0);
+  const rem = p.rem - pend; cur.po = {...p, remNow: rem};
+  if (!$('#fSup').value && p.sup) $('#fSup').value = p.sup;
+  box.innerHTML = `<div class="kv" style="margin-top:6px"><div><small>المورد</small><span style="font-size:13px">${esc(p.sup || '—')}</span></div><div><small>كمية الـPO</small><span>${fmt(p.qty)}</span></div><div><small>اتستلم (في الشيت)</small><span>${fmt(p.rec)}</span></div>
+    <div><small>إضافة على الموبايل</small><span>${fmt(pend)}</span></div><div class="hi" style="grid-column:span 2"><small>المتبقي على الـPO</small><span>${fmt(rem)}</span></div></div>`;
+}
+$('#fPo').oninput = poInfo; $('#fType').onchange = poInfo;
+async function fillSup() { const l = (await getMeta('sups')) || []; const all = [...new Set([...l, ...POS.map(p => p.sup).filter(Boolean)])]; $('#supList').innerHTML = all.map(n => `<option value="${esc(n)}">`).join(''); }
 let saving = false;
 $('#saveBtn').onclick = async () => {
   if (saving) return;
@@ -10521,9 +10581,21 @@ $('#saveBtn').onclick = async () => {
   if (!code) return err('مفيش كود.');
   if (!CAT.size) return err('مفيش دليل أكواد على الموبايل — استورد ملف المخزن الأول.');
   if (!cur.known && !$('#unkChk').checked) return err('الكود مش موجود في الدليل. صحّحه، أو علّم على «أنا متأكد» لو عايز تحفظه برضه.');
-  if (!(qty > 0)) return err('اكتب الكمية المصروفة (رقم أكبر من صفر).');
-  if (!rcpt) return err('اكتب اسم المستلم أو الجهة.');
-  if (cur.known && cur.avail !== undefined && qty > cur.avail + 1e-9) {
+  const rcv = isRcv();
+  const po = $('#fPo').value.trim(), sup = $('#fSup').value.trim(), dn = $('#fDn').value.trim(), rtype = $('#fType').value, poQty = $('#fPoQty').value === '' ? null : Number($('#fPoQty').value);
+  if (!(qty > 0)) return err(rcv ? 'اكتب الكمية المستلمة (رقم أكبر من صفر).' : 'اكتب الكمية المصروفة (رقم أكبر من صفر).');
+  if (rcv) {
+    if (rtype === 'إذن استلام' && !po) return err('اكتب رقم أمر التوريد (PO).');
+    if (!sup) return err('اكتب اسم المورد أو الجهة.');
+    if (!dn) return err('اكتب رقم إذن التسليم / الاستلام.');
+    const same = (await allOps()).find(o => opKind(o) === 'receipt' && o.id !== cur.editId && o.code === code && String(o.dn) === dn && String(o.po || '') === po);
+    if (same) return err(`الإضافة دي متسجلة قبل كده بنفس الصنف ورقم الإذن ${dn}${po ? ' والـPO ' + po : ''} (${fmt(same.qty)} — ${same.date}). لو دي توريدة تانية فعلًا، صحّح رقم الإذن.`);
+    await poInfo();
+    if (cur.po && qty > cur.po.remNow + 1e-9) {
+      const v = await modal('الكمية أكبر من المتبقي على الـPO', `المتبقي على أمر التوريد ${po}: ${fmt(cur.po.remNow)}\nالكمية المستلمة: ${fmt(qty)}\nتحفظ برضه؟`, [{t: 'أيوه احفظ', v: 1, cls: 'org'}, {t: 'لا، هراجع', v: 0, cls: 'ghost'}]);
+      if (!v) return; }
+  } else if (!rcpt) return err('اكتب اسم المستلم أو الجهة.');
+  if (!rcv && cur.known && cur.avail !== undefined && qty > cur.avail + 1e-9) {
     const v = await modal('الكمية أكبر من المتاح', `المتاح تقريبًا ${fmt(cur.avail)} والكمية ${fmt(qty)}.\nتحفظ برضه؟`, [{t: 'أيوه احفظ', v: 1, cls: 'org'}, {t: 'لا، هراجع', v: 0, cls: 'ghost'}]);
     if (!v) return;
   }
@@ -10533,9 +10605,12 @@ $('#saveBtn').onclick = async () => {
     const old = cur.editId ? (await allOps()).find(o => o.id === cur.editId) : null;
     const op = Object.assign(old || {id: Date.now().toString(36) + Math.random().toString(36).slice(2, 7), ts: new Date().toISOString(), status: 'new'}, {
       code, raw: cur.raw ?? code, src: cur.src || '', name: r ? r[1] : '', unit: r ? r[2] : '', bal: r ? r[3] : null, loc: r ? r[6] : '', known: !!r,
-      qty, rcpt, req, date, edited: old ? new Date().toISOString() : undefined});
-    await putOp(op); await setMeta('lastRcpt', rcpt); await addRcpt(rcpt);
-    beep(true); toast(old ? '✓ اتعدلت على الموبايل' : '✓ اتحفظت على الموبايل (لسه ما اتصدّرتش)');
+      qty, date, edited: old ? new Date().toISOString() : undefined, kind: rcv ? 'receipt' : 'issue'},
+      rcv ? {rtype, po, poQty: cur.po ? null : poQty, supplier: sup, dn, rcpt: '', req: ''} : {rcpt, req});
+    await putOp(op);
+    if (rcv) { const l = (await getMeta('sups')) || []; if (!l.includes(sup)) { l.unshift(sup); await setMeta('sups', l.slice(0, 60)); } fillSup(); }
+    else { await setMeta('lastRcpt', rcpt); await addRcpt(rcpt); }
+    beep(true); toast(old ? '✓ اتعدلت على الموبايل' : (rcv ? '✓ الإضافة اتحفظت على الموبايل (لسه ما اتصدّرتش)' : '✓ اتحفظت على الموبايل (لسه ما اتصدّرتش)'));
     cur = null; $('#formCard').classList.add('hide'); updateCount();
   } catch (e) { err('حصلت مشكلة في الحفظ: ' + e.message); }
   finally { saving = false; $('#saveBtn').disabled = false; }
@@ -10547,10 +10622,11 @@ async function fillRcpts() { const l = (await getMeta('rcpts')) || []; const w =
 async function editOp(id) {
   const o = (await allOps()).find(x => x.id === id); if (!o) return;
   if (o.status !== 'new') { toast('العملية دي اتصدّرت — رجّعها «جديدة» الأول لو عايز تعدلها'); return; }
-  showPage('pScan');
+  showPage('pScan'); setMode(opKind(o), true);
   cur = {raw: o.raw, code: o.code, src: o.src, editId: o.id, dupAck: true};
   openForm(); $('#fCode').value = o.code; $('#rawLine').textContent = 'تعديل عملية محفوظة';
-  $('#fQty').value = o.qty; $('#fRcpt').value = o.rcpt; $('#fReq').value = o.req; $('#fDate').value = o.date; $('#unkChk').checked = !o.known;
+  $('#fQty').value = o.qty; $('#fRcpt').value = o.rcpt || ''; $('#fReq').value = o.req || ''; $('#fDate').value = o.date; $('#unkChk').checked = !o.known;
+  if (opKind(o) === 'receipt') { $('#fType').value = o.rtype || 'إذن استلام'; $('#fPo').value = o.po || ''; $('#fSup').value = o.supplier || ''; $('#fDn').value = o.dn || ''; $('#fPoQty').value = o.poQty ?? ''; }
   $('#saveBtn').textContent = '💾 حفظ التعديل';
   await lookup(false);
 }
@@ -10563,13 +10639,13 @@ async function renderOps() {
   const ops = (await updateCount()).filter(o => filt === 'all' || o.status === filt).sort((a, b) => b.ts.localeCompare(a.ts));
   const L = $('#opsList');
   if (!ops.length) { L.innerHTML = `<div class="card muted">${filt === 'new' ? 'مفيش عمليات محفوظة لسه ما اتصدّرتش.' : 'مفيش عمليات.'}</div>`; return; }
-  L.innerHTML = ops.map(o => `<div class="card op ${o.status}"><div class="t">${o.known ? esc(o.name) : '⛔ كود مش في الدليل'}</div>
-    <div class="m"><span class="code">${esc(o.code)}</span><br>الكمية: <b>${fmt(o.qty)} ${esc(o.unit)}</b> · المستلم: <b>${esc(o.rcpt)}</b>${o.req ? ' · طلب: <b>' + esc(o.req) + '</b>' : ''}<br>التاريخ: ${esc(o.date)} · ${o.status === 'new' ? '<span class="st new">محفوظة على الموبايل — لسه ما اتصدّرتش</span>' : '<span class="st exp">اتصدّرت ' + esc((o.exportedAt || '').slice(0, 16).replace('T', ' ')) + ' — اتأكد إنها اتلصقت في الشيت</span>'}</div>
+  L.innerHTML = ops.map(o => `<div class="card op ${o.status} ${opKind(o) === 'receipt' ? 'rcv' : ''}"><div class="t">${opKind(o) === 'receipt' ? '<span class="kind rcv">إضافة</span>' : '<span class="kind iss">صرف</span>'}${o.known ? esc(o.name) : '⛔ كود مش في الدليل'}</div>
+    <div class="m"><span class="code">${esc(o.code)}</span><br>الكمية: <b>${fmt(o.qty)} ${esc(o.unit)}</b> · ${opKind(o) === 'receipt' ? `${esc(o.rtype)} <b>${esc(o.dn)}</b>${o.po ? ' · PO: <b>' + esc(o.po) + '</b>' : ''} · المورد: <b>${esc(o.supplier)}</b>` : `المستلم: <b>${esc(o.rcpt)}</b>${o.req ? ' · طلب: <b>' + esc(o.req) + '</b>' : ''}`}<br>التاريخ: ${esc(o.date)} · ${o.status === 'new' ? '<span class="st new">محفوظة على الموبايل — لسه ما اتصدّرتش</span>' : '<span class="st exp">اتصدّرت ' + esc((o.exportedAt || '').slice(0, 16).replace('T', ' ')) + ' — اتأكد إنها اتلصقت في الشيت</span>'}</div>
     <div class="acts">${o.status === 'new' ? `<button class="btn ghost" data-a="edit" data-id="${o.id}">✏️ تعديل</button><button class="btn red" data-a="del" data-id="${o.id}">🗑 حذف</button>` : `<button class="btn ghost" data-a="back" data-id="${o.id}">↩ رجّعها جديدة</button><button class="btn red" data-a="del" data-id="${o.id}">🗑 حذف</button>`}</div></div>`).join('');
   L.querySelectorAll('button[data-a]').forEach(b => b.onclick = async () => {
     const id = b.dataset.id, a = b.dataset.a; const o = (await allOps()).find(x => x.id === id);
     if (a === 'edit') return editOp(id);
-    if (a === 'del') { const v = await modal('حذف العملية؟', `${o.name || o.code}\nالكمية ${fmt(o.qty)} — ${o.rcpt}`, [{t: 'أيوه احذف', v: 1, cls: 'red'}, {t: 'لا', v: 0, cls: 'ghost'}]); if (v) { await delOp(id); toast('اتحذفت'); renderOps(); } }
+    if (a === 'del') { const v = await modal('حذف العملية؟', `${opKind(o) === 'receipt' ? 'إضافة' : 'صرف'}: ${o.name || o.code}\nالكمية ${fmt(o.qty)} — ${o.rcpt || o.supplier}`, [{t: 'أيوه احذف', v: 1, cls: 'red'}, {t: 'لا', v: 0, cls: 'ghost'}]); if (v) { await delOp(id); toast('اتحذفت'); renderOps(); } }
     if (a === 'back') { o.status = 'new'; delete o.exportedAt; await putOp(o); renderOps(); }
   });
 }
@@ -10597,13 +10673,15 @@ const N = (ref, v, st) => (v === null || v === undefined || v === '' || isNaN(v)
 function sheetXml(rows, cols, frozen) {
   return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetViews><sheetView rightToLeft="1" workbookViewId="0">${frozen ? `<pane ySplit="${frozen}" topLeftCell="A${frozen + 1}" activePane="bottomLeft" state="frozen"/>` : ''}</sheetView></sheetViews><cols>${cols}</cols><sheetData>${rows.join('')}</sheetData></worksheet>`;
 }
-function buildXlsx(ops) {
+function buildXlsx(all) {
+  const ops = all.filter(o => opKind(o) === 'issue'), rcv = all.filter(o => opKind(o) === 'receipt');
   // styles: 1 date, 2 header, 3 text, 4 number, 5 title, 6 note, 7 header-grey(formula cols)
   const styles = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><numFmts count="2"><numFmt numFmtId="164" formatCode="yyyy\\-mm\\-dd"/><numFmt numFmtId="165" formatCode="#,##0.###"/></numFmts><fonts count="4"><font><sz val="11"/><name val="Arial"/></font><font><b/><sz val="11"/><color rgb="FFFFFFFF"/><name val="Arial"/></font><font><b/><sz val="14"/><color rgb="FF1F3B73"/><name val="Arial"/></font><font><sz val="10"/><color rgb="FF8A5A00"/><name val="Arial"/></font></fonts><fills count="5"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill><fill><patternFill patternType="solid"><fgColor rgb="FF1F3B73"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FF8A93A3"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FFFFF4D6"/></patternFill></fill></fills><borders count="1"><border><left/><right/><top/><bottom/><diagonal/></border></borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="8"><xf/><xf numFmtId="164" applyNumberFormat="1"/><xf fontId="1" fillId="2" applyFont="1" applyFill="1" applyAlignment="1"><alignment horizontal="center" vertical="center" wrapText="1"/></xf><xf numFmtId="49" applyNumberFormat="1"/><xf numFmtId="165" applyNumberFormat="1"/><xf fontId="2" applyFont="1"/><xf fontId="3" fillId="4" applyFont="1" applyFill="1" applyAlignment="1"><alignment wrapText="1" vertical="top"/></xf><xf fontId="1" fillId="3" applyFont="1" applyFill="1" applyAlignment="1"><alignment horizontal="center" vertical="center" wrapText="1"/></xf></cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>`;
   const stamp = new Date(); const st = today() + ' ' + String(stamp.getHours()).padStart(2, '0') + ':' + String(stamp.getMinutes()).padStart(2, '0');
   // Sheet 1: same columns/rows layout as «صرف سريع بالاسكانر»: data in C..K starting row 6
   const r1 = [];
   r1.push(`<row r="1">${S('C1', 'عمليات صرف من تطبيق الموبايل — للصق في شيت «صرف سريع بالاسكانر»', 5)}</row>`);
+  if (!ops.length) r1.push(`<row r="4">${S('C4', 'مفيش عمليات صرف في الملف ده.', 6)}</row>`);
   r1.push(`<row r="2" ht="48" customHeight="1">${S('C2', `اتصدّر ${st} — ${ops.length} عملية. حدد من C6 لحد آخر صف في K ← نسخ ← في الشيت الأصلي اقف على أول خانة فاضية في عمود C ← لصق خاص ← قيم + تخطي الفراغات. الأعمدة E و F و G فاضية عمدًا علشان معادلات الشيت ما تتمسحش.`, 6)}</row>`);
   r1.push(`<row r="3">${S('C3', 'عمود K = «لا» دايمًا: التطبيق ما بيعرفش إذا كانت اتسجلت على السيستم ولا لأ. غيّرها لـ«نعم» من الشيت بعد التسجيل.', 6)}</row>`);
   const H = ['التاريخ', 'كود الصنف (اسكان)', 'اسم الصنف — سيبها فاضية', 'الوحدة — سيبها فاضية', 'الرصيد الدفتري — سيبها فاضية', 'الكمية المصروفة', 'المستلم / الجهة', 'رقم طلب الصرف', 'اتسجل على السيستم؟'];
@@ -10612,21 +10690,34 @@ function buildXlsx(ops) {
   ops.forEach((o, i) => { const r = i + 6;
     r1.push(`<row r="${r}">${N('C' + r, serial(o.date), 1)}${S('D' + r, o.code, 3)}${N('H' + r, o.qty, 4)}${S('I' + r, o.rcpt)}${o.req ? S('J' + r, o.req, 3) : ''}${S('K' + r, 'لا')}</row>`); });
   const c1 = '<col min="1" max="2" width="3" customWidth="1"/><col min="3" max="3" width="12" customWidth="1"/><col min="4" max="4" width="27" customWidth="1"/><col min="5" max="7" width="11" customWidth="1"/><col min="8" max="8" width="12" customWidth="1"/><col min="9" max="9" width="22" customWidth="1"/><col min="10" max="10" width="14" customWidth="1"/><col min="11" max="11" width="14" customWidth="1"/>';
-  // Sheet 2: review
-  const H2 = ['م', 'التاريخ', 'كود الصنف', 'اسم الصنف (من دليل الموبايل)', 'الوحدة', 'الرصيد الدفتري وقت الدليل', 'الكمية المصروفة', 'المستلم / الجهة', 'رقم طلب الصرف', 'وقت الحفظ', 'طريقة القراءة', 'الموقع', 'ملاحظة'];
-  const L2 = 'ABCDEFGHIJKLM';
+  // Sheet R: receipts — same columns/rows as «المدخلات» (header row 4, data from row 5, columns B..N)
+  const rr = [];
+  rr.push(`<row r="1">${S('B1', 'إضافات (توريدات) من تطبيق الموبايل — للصق في شيت «المدخلات»', 5)}</row>`);
+  rr.push(`<row r="2" ht="60" customHeight="1">${S('B2', `اتصدّر ${st} — ${rcv.length} إضافة. حدد من B5 لحد آخر صف في N ← نسخ ← في «المدخلات» اقف على أول خانة فاضية في عمود B ← لصق خاص ← قيم + تخطي الفراغات. C و D و E فاضيين عمدًا علشان معادلات الشيت. قبل اللصق اتأكد إن أرقام الأذون دي مش موجودة في «المدخلات» علشان ما تتضافش مرتين.`, 6)}</row>`);
+  const HR = ['كود الصنف', 'اسم الصنف — سيبها فاضية', 'الوحدة — سيبها فاضية', 'المجموعة — سيبها فاضية', 'الكمية', 'التاريخ', 'نوع الحركة', 'رقم الإذن', 'بيان الحركة', 'الجهة / المورد', 'أمر التوريد PO', 'كمية أمر التوريد', 'Brand'];
+  const LR = 'BCDEFGHIJKLMN';
+  rr.push(`<row r="4" ht="34" customHeight="1">${HR.map((h, i) => S(LR[i] + '4', h, 'CDE'.includes(LR[i]) ? 7 : 2)).join('')}</row>`);
+  if (!rcv.length) rr.push(`<row r="5">${S('B5', 'مفيش إضافات في الملف ده.', 6)}</row>`);
+  const poCell = (ref, v) => /^[1-9]\d{0,14}$/.test(String(v || '')) ? N(ref, Number(v)) : (v ? S(ref, v, 3) : '');
+  rcv.forEach((o, i) => { const r = i + 5;
+    rr.push(`<row r="${r}">${S('B' + r, o.code, 3)}${N('F' + r, o.qty, 4)}${N('G' + r, serial(o.date), 1)}${S('H' + r, o.rtype || 'إذن استلام')}${S('I' + r, o.dn, 3)}${S('J' + r, (o.rtype || 'إذن استلام') + ' ' + o.dn)}${S('K' + r, o.supplier)}${poCell('L' + r, o.po)}${o.poQty != null ? N('M' + r, o.poQty, 4) : ''}</row>`); });
+  const cr = '<col min="1" max="1" width="3" customWidth="1"/><col min="2" max="2" width="27" customWidth="1"/><col min="3" max="5" width="11" customWidth="1"/><col min="6" max="7" width="12" customWidth="1"/><col min="8" max="8" width="13" customWidth="1"/><col min="9" max="9" width="12" customWidth="1"/><col min="10" max="11" width="24" customWidth="1"/><col min="12" max="14" width="13" customWidth="1"/>';
+  // Sheet 2: review (both kinds)
+  const H2 = ['م', 'النوع', 'التاريخ', 'كود الصنف', 'اسم الصنف (من دليل الموبايل)', 'الوحدة', 'الرصيد الدفتري وقت الدليل', 'الكمية', 'المستلم / المورد', 'رقم طلب الصرف / رقم الإذن', 'أمر التوريد PO', 'وقت الحفظ', 'طريقة القراءة', 'الموقع', 'ملاحظة'];
+  const L2 = 'ABCDEFGHIJKLMNO';
   const r2 = [`<row r="1" ht="34" customHeight="1">${H2.map((h, i) => S(L2[i] + '1', h, 2)).join('')}</row>`];
-  ops.forEach((o, i) => { const r = i + 2;
-    r2.push(`<row r="${r}">${N('A' + r, i + 1)}${N('B' + r, serial(o.date), 1)}${S('C' + r, o.code, 3)}${S('D' + r, o.name)}${S('E' + r, o.unit)}${N('F' + r, o.bal, 4)}${N('G' + r, o.qty, 4)}${S('H' + r, o.rcpt)}${S('I' + r, o.req || '', 3)}${S('J' + r, new Date(o.ts).toLocaleString('en-GB'))}${S('K' + r, o.src || '')}${S('L' + r, o.loc || '')}${S('M' + r, o.known ? '' : '⚠ الكود مش موجود في دليل الموبايل')}</row>`); });
-  const c2 = '<col min="1" max="2" width="11" customWidth="1"/><col min="3" max="3" width="27" customWidth="1"/><col min="4" max="4" width="40" customWidth="1"/><col min="5" max="7" width="12" customWidth="1"/><col min="8" max="8" width="22" customWidth="1"/><col min="9" max="13" width="15" customWidth="1"/>';
+  all.forEach((o, i) => { const r = i + 2, k = opKind(o) === 'receipt';
+    r2.push(`<row r="${r}">${N('A' + r, i + 1)}${S('B' + r, k ? (o.rtype || 'إضافة') : 'صرف')}${N('C' + r, serial(o.date), 1)}${S('D' + r, o.code, 3)}${S('E' + r, o.name)}${S('F' + r, o.unit)}${N('G' + r, o.bal, 4)}${N('H' + r, o.qty, 4)}${S('I' + r, k ? o.supplier : o.rcpt)}${S('J' + r, (k ? o.dn : o.req) || '', 3)}${S('K' + r, k ? (o.po || '') : '', 3)}${S('L' + r, new Date(o.ts).toLocaleString('en-GB'))}${S('M' + r, o.src || '')}${S('N' + r, o.loc || '')}${S('O' + r, o.known ? '' : '⚠ الكود مش موجود في دليل الموبايل')}</row>`); });
+  const c2 = '<col min="1" max="3" width="11" customWidth="1"/><col min="4" max="4" width="27" customWidth="1"/><col min="5" max="5" width="40" customWidth="1"/><col min="6" max="8" width="12" customWidth="1"/><col min="9" max="9" width="24" customWidth="1"/><col min="10" max="15" width="15" customWidth="1"/>';
   const files = [
-    {name: '[Content_Types].xml', data: '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/worksheets/sheet2.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/></Types>'},
+    {name: '[Content_Types].xml', data: '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/worksheets/sheet2.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/worksheets/sheet3.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/></Types>'},
     {name: '_rels/.rels', data: '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>'},
-    {name: 'xl/workbook.xml', data: '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><bookViews><workbookView/></bookViews><sheets><sheet name="للصق في الشيت" sheetId="1" r:id="rId1"/><sheet name="مراجعة" sheetId="2" r:id="rId2"/></sheets></workbook>'},
-    {name: 'xl/_rels/workbook.xml.rels', data: '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet2.xml"/><Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>'},
+    {name: 'xl/workbook.xml', data: '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><bookViews><workbookView/></bookViews><sheets><sheet name="صرف — للصق في صرف سريع" sheetId="1" r:id="rId1"/><sheet name="إضافة — للصق في المدخلات" sheetId="3" r:id="rId4"/><sheet name="مراجعة" sheetId="2" r:id="rId2"/></sheets></workbook>'},
+    {name: 'xl/_rels/workbook.xml.rels', data: '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet2.xml"/><Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/><Relationship Id="rId4" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet3.xml"/></Relationships>'},
     {name: 'xl/styles.xml', data: styles},
     {name: 'xl/worksheets/sheet1.xml', data: sheetXml(r1, c1, 5)},
     {name: 'xl/worksheets/sheet2.xml', data: sheetXml(r2, c2, 1)},
+    {name: 'xl/worksheets/sheet3.xml', data: sheetXml(rr, cr, 4)},
   ];
   return zipStore(files);
 }
@@ -10634,11 +10725,11 @@ async function doExport(which) {
   const ops = (await allOps()).filter(o => which === 'all' || o.status === 'new').sort((a, b) => a.ts.localeCompare(b.ts));
   if (!ops.length) { toast('مفيش عمليات للتصدير'); return; }
   const blob = buildXlsx(ops);
-  const d = new Date(); const fn = `صرف_الموبايل_${today()}_${String(d.getHours()).padStart(2, '0')}${String(d.getMinutes()).padStart(2, '0')}.xlsx`;
+  const d = new Date(); const fn = `حركات_الموبايل_${today()}_${String(d.getHours()).padStart(2, '0')}${String(d.getMinutes()).padStart(2, '0')}.xlsx`;
   const file = new File([blob], fn, {type: blob.type});
   let how = 'download';
   if (navigator.canShare && navigator.canShare({files: [file]})) {
-    how = await modal('ابعت الملف إزاي؟', `${ops.length} عملية في ملف ${fn}`, [{t: '📨 مشاركة (واتساب / إيميل / Drive)', v: 'share', cls: 'org'}, {t: '⬇️ حفظ في التنزيلات', v: 'download'}, {t: 'إلغاء', v: null, cls: 'ghost'}]);
+    how = await modal('ابعت الملف إزاي؟', `${ops.filter(o => opKind(o) === 'issue').length} صرف و${ops.filter(o => opKind(o) === 'receipt').length} إضافة في ملف ${fn}`, [{t: '📨 مشاركة (واتساب / إيميل / Drive)', v: 'share', cls: 'org'}, {t: '⬇️ حفظ في التنزيلات', v: 'download'}, {t: 'إلغاء', v: null, cls: 'ghost'}]);
     if (!how) return;
   }
   try {
@@ -10660,7 +10751,8 @@ $('#clearExpBtn').onclick = async () => {
 };
 async function renderExp() {
   const ops = await allOps(); const n = ops.filter(o => o.status === 'new').length, e = ops.length - n;
-  $('#expInfo').innerHTML = `على الموبايل دلوقتي: <b>${n}</b> عملية لسه ما اتصدّرتش، و<b>${e}</b> اتصدّرت.`;
+  const nr = ops.filter(o => o.status === 'new' && opKind(o) === 'receipt').length;
+  $('#expInfo').innerHTML = `على الموبايل دلوقتي: <b>${n}</b> عملية لسه ما اتصدّرتش (${n - nr} صرف و${nr} إضافة)، و<b>${e}</b> اتصدّرت.`;
   $('#exportBtn').disabled = !n;
   try { const est = await navigator.storage.estimate(); const p = navigator.storage.persisted ? await navigator.storage.persisted() : false; $('#storeInfo').textContent = `التخزين: ${(est.usage / 1024).toFixed(0)} KB مستخدم — ${p ? 'محمي من المسح التلقائي ✓' : 'غير محمي (صدّر أول بأول)'} — نسخة التطبيق ${APP_VER}`; } catch (x) {}
 }
@@ -10673,12 +10765,13 @@ $('#catInput').onchange = async e => {
   const f = e.target.files[0]; e.target.value = ''; const msg = $(catMsgTarget); catMsgTarget = '#catMsg'; if (!f) return;
   msg.innerHTML = '<div class="alert warn">جاري القراءة…</div>';
   try {
-    const {rows, workers} = await readStockSheet(f);
+    const {rows, workers, pos} = await readStockSheet(f);
     if (rows.length < 10) throw new Error('لقيت ' + rows.length + ' صنف بس — اتأكد إنه ملف المخزن.');
     const d = new Date(f.lastModified || Date.now()); const ds = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
     await setMeta('catalog', {rows, date: ds, src: f.name});
     if (workers.length) await setMeta('workers', workers);
-    loadCat(rows, ds, f.name); fillRcpts();
+    await setMeta('pos', pos); POS = pos;
+    loadCat(rows, ds, f.name); fillRcpts(); fillSup();
     const okHtml = `<div class="alert ok"><b>✓ اتحدّث الدليل</b>${rows.length} صنف${workers.length ? ' و' + workers.length + ' اسم عامل' : ''} من «${esc(f.name)}» — محفوظين على الموبايل ده بس.</div>`;
     msg.innerHTML = okHtml; $('#catMsg').innerHTML = okHtml; if (!$('#pScan').classList.contains('hide')) toast('✓ الدليل جاهز — تقدر تعمل اسكان');
   } catch (x) { msg.innerHTML = `<div class="alert bad"><b>مقدرتش أقرا الملف</b>${esc(x.message)}</div>`; }
@@ -10734,7 +10827,15 @@ async function readStockSheet(f) {
     for (const r of wd.getElementsByTagName('row')) { const m = {}; for (const c of r.getElementsByTagName('c')) m[colOf(c.getAttribute('r'))] = val(c);
       if (!col) { for (const [c, v] of Object.entries(m)) if (typeof v === 'string' && v.trim() === 'اسم العامل') col = c; continue; }
       const v = m[col]; if (typeof v === 'string' && v.trim()) workers.push(v.trim()); } } } catch (e) {}
-  return {rows, workers: [...new Set(workers)]};
+  // purchase orders («أوامر التوريد»): PO, code, supplier, PO qty, received, remaining — optional
+  let pos = [];
+  try { const pp = sheetPath('أوامر التوريد'); if (pp && z[pp]) { const pd = P(await z[pp]()); let hr2 = null, c2 = {};
+    const want2 = {po: 'أمر التوريد PO', code: 'كود الصنف', sup: 'المورد', qty: 'كمية أمر التوريد', rec: 'المستلم', rem: 'المتبقي'};
+    for (const r of pd.getElementsByTagName('row')) { const m = {}; for (const c of r.getElementsByTagName('c')) m[colOf(c.getAttribute('r'))] = val(c);
+      if (!hr2) { const inv = {}; for (const [c, v] of Object.entries(m)) if (typeof v === 'string') inv[v.trim()] = c; if (inv[want2.po] && inv[want2.code]) { hr2 = 1; for (const k in want2) c2[k] = inv[want2[k]]; } continue; }
+      const po = m[c2.po], code = m[c2.code]; if (po === null || po === undefined || po === '' || !code) continue;
+      pos.push({po: String(po), code: String(code), sup: String(m[c2.sup] ?? ''), qty: num(m[c2.qty]) || 0, rec: num(m[c2.rec]) || 0, rem: num(m[c2.rem]) ?? 0}); } } } catch (e) {}
+  return {rows, workers: [...new Set(workers)], pos};
 }
 
 // ---------------- boot ----------------
@@ -10742,6 +10843,8 @@ async function readStockSheet(f) {
   try { await openDB(); } catch (e) { $('#camErr').textContent = 'التخزين على الموبايل مش شغال في الوضع ده (ممكن تصفح خفي). العمليات مش هتتحفظ.'; $('#camErr').classList.remove('hide'); }
   let c = null; try { c = db && await getMeta('catalog'); } catch (e) {}
   if (c && c.rows && c.rows.length) loadCat(c.rows, c.date, c.src); else loadCat([], '', '');
+  try { POS = (db && await getMeta('pos')) || []; } catch (e) {}
+  setMode(mode); if (db) fillSup();
   if (db) { fillRcpts(); updateCount(); }
   try { if (navigator.storage && navigator.storage.persist) await navigator.storage.persist(); } catch (e) {}
   swSetup();
