@@ -71,6 +71,44 @@ body.rcv #scanBtn{background:var(--ok)}
 .muted{color:var(--mut);font-size:13px;line-height:1.6}
 .tabs{display:flex;gap:6px;margin-bottom:10px}.tabs button{flex:1;padding:8px;font-size:14px;background:#E8ECF4;color:var(--navy)}.tabs button.on{background:var(--navy);color:#fff}
 .hide{display:none!important}
+/* ---- stock card ---- */
+.devbar{background:#5B2C83;color:#fff;text-align:center;font-size:13px;padding:4px 8px;font-weight:700}
+#cResults div{padding:9px 10px;border-bottom:1px solid var(--line);cursor:pointer}#cResults div:active{background:#F3F5F9}#cResults small{display:block;color:var(--mut)}
+.ckv{display:grid;grid-template-columns:repeat(2,1fr);gap:6px;margin-top:8px}.ckv div{background:#F3F5F9;border-radius:10px;padding:7px 9px;min-width:0}
+.ckv small{display:block;color:var(--mut);font-size:11px}.ckv span{font-weight:700;font-size:15px;overflow-wrap:anywhere}
+.ckv .wide{grid-column:span 2}
+.csum{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:10px 0}.csum div{border-radius:10px;padding:7px 4px;text-align:center;background:#E8ECF4}
+.csum small{display:block;font-size:11px;color:var(--mut)}.csum b{font-size:15px}.csum .in{background:var(--okbg);color:var(--ok)}.csum .out{background:#FDEBDD;color:#9a4511}
+@media (max-width:420px){.csum{grid-template-columns:repeat(2,1fr)}}
+.cfil{display:grid;grid-template-columns:1fr 1fr;gap:6px}.cfil label{margin:4px 0 2px}.cfil input,.cfil select{font-size:15px;padding:8px}
+.ctbl{overflow-x:auto;border:1px solid var(--line);border-radius:10px;background:#fff}
+.ctbl table{border-collapse:collapse;width:100%;min-width:860px;font-size:13px;font-variant-numeric:tabular-nums}
+.ctbl th{background:var(--navy);color:#fff;padding:7px 6px;text-align:right;white-space:nowrap;position:sticky;top:0}
+.ctbl td{padding:6px;border-bottom:1px solid var(--line);vertical-align:top}
+.ctbl td.n{text-align:left;direction:ltr;white-space:nowrap}.ctbl td.in{color:var(--ok);font-weight:700}.ctbl td.out{color:#9a4511;font-weight:700}.ctbl td.bal{font-weight:700}
+.ctbl tr.open td{background:#F3F5F9;font-weight:700}.ctbl tr.pend td{background:#FFF4D6}
+.tk{display:inline-block;font-size:11px;padding:1px 7px;border-radius:6px;font-weight:700;white-space:nowrap}
+.tk.k-in{background:var(--okbg);color:var(--ok)}.tk.k-out{background:#FDEBDD;color:#9a4511}.tk.k-adj{background:#E8ECF4;color:#3a4660}.tk.k-ret{background:#F2E6FB;color:#5B2C83}.tk.k-tr{background:#E3EEF9;color:#1F5C99}
+#printArea{display:none}
+@media print{
+  @page{size:A4 landscape;margin:10mm 9mm 14mm;@bottom-center{content:"صفحة " counter(page) " من " counter(pages);font-size:9px;color:#555}}
+  body{background:#fff!important}
+  body>*:not(#printArea){display:none!important}
+  #printArea{display:block!important;color:#000;font-size:10.5px}
+  #printArea table{width:100%;border-collapse:collapse}
+  #printArea thead{display:table-header-group}
+  #printArea tr{page-break-inside:avoid;break-inside:avoid}
+  #printArea th,#printArea td{border:1px solid #000;padding:3px 4px;vertical-align:top}
+  #printArea th{background:#e6e6e6!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  #printArea .n{text-align:left;direction:ltr;white-space:nowrap}
+  #printArea .hdr{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #000;padding-bottom:4px;margin-bottom:6px}
+  #printArea h1{font-size:18px;margin:2px 0}
+  #printArea .info{display:grid;grid-template-columns:repeat(4,1fr);gap:2px 10px;margin:6px 0}
+  #printArea .tot{margin-top:6px;display:flex;gap:18px;font-weight:bold}
+  #printArea .sig{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:16px;break-inside:avoid}
+  #printArea .sig div{border:1px solid #000;min-height:22mm;padding:4px}
+  #printArea .note{font-size:9px;color:#333;margin-top:4px}
+}
 #results div{padding:10px;border-bottom:1px solid var(--line);cursor:pointer}
 #results div:active{background:#F3F5F9}
 #results small{display:block;color:var(--mut)}
@@ -186,8 +224,14 @@ body.rcv #scanBtn{background:var(--ok)}
     <p class="muted" id="catInfo"></p>
     <button class="btn ghost" id="catBtn" style="width:100%">📥 اختار نسخة ملف المخزن (.xlsx) لتحديث الدليل</button>
     <input type="file" id="catInput" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" class="hide">
-    <p class="muted">بيقرا ورقة «الرصيد والجرد» (الكود، الاسم، الوحدة، الرصيد الدفتري، صرف لم يُسجل، الموقع)، وأسماء العمال من «العمال»، وأوامر التوريد من «أوامر التوريد». البيانات بتتحفظ على الموبايل ده بس ومش بتترفع على النت، والملف نفسه مش بيتعدّل. لازم يكون .xlsx محفوظ من Excel.</p>
+    <p class="muted">بيقرا ورقة «الرصيد والجرد» (الكود، الاسم، الوحدة، الرصيد الدفتري، صرف لم يُسجل، الموقع)، وأسماء العمال من «العمال»، وأوامر التوريد من «أوامر التوريد»، وكل الحركات من «المدخلات» وأنواعها من «الإعدادات» علشان كارت الصنف، والصرف اللي لسه ما اتسجلش من «صرف سريع بالاسكانر». البيانات بتتحفظ على الموبايل ده بس ومش بتترفع على النت، والملف نفسه مش بيتعدّل. لازم يكون .xlsx محفوظ من Excel.</p>
     <div id="catMsg"></div>
+  </div>
+  <div class="card">
+    <h3 style="margin:0 0 6px;color:var(--navy)">بيانات التقارير</h3>
+    <label for="coName">اسم الشركة (بيظهر أعلى كارت الصنف المطبوع)</label>
+    <input id="coName" autocomplete="organization">
+    <p class="muted">بيتحفظ على الموبايل ده بس.</p>
   </div>
   <div class="card">
     <h3 style="margin:0 0 6px;color:var(--navy)">التطبيق</h3>
@@ -197,11 +241,25 @@ body.rcv #scanBtn{background:var(--ok)}
     <p class="muted" id="storeInfo"></p>
   </div>
 </section>
+
+<!-- ============ STOCK CARD ============ -->
+<section id="pCard" class="hide">
+  <div class="card" id="cSearchCard">
+    <h3 style="margin:0 0 6px;color:var(--navy)">📒 كارت حركة الصنف</h3>
+    <label for="cSearch">ابحث بجزء من اسم الصنف أو الكود</label>
+    <input id="cSearch" autocomplete="off" placeholder="مثال: حديد 25 — أو — 00007">
+    <div id="cResults"></div>
+    <button class="btn ghost" id="cScanBtn" style="width:100%;margin-top:8px">📷 اسكان باركود الصنف</button>
+  </div>
+  <div id="cBody"></div>
+</section>
 </main>
+<div id="printArea"></div>
 
 <nav>
   <button data-p="pScan" class="on"><b>📷</b>اسكان</button>
   <button data-p="pOps"><b>📋</b>العمليات <span class="badge" id="newCount">0</span></button>
+  <button data-p="pCard"><b>📒</b>كارت الصنف</button>
   <button data-p="pExp"><b>📤</b>تصدير وإعدادات</button>
 </nav>
 
@@ -10307,7 +10365,8 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
 /******/ ])["default"];
 });</script>
 <script>
-const APP_VER = "20261014r";
+const APP_VER = "20261016p";
+const DB_NAME = "shams-scan", CACHE_PFX = "shams-scan-", LS_PFX = "shams-", FLAVOR = "prod";
 </script>
 <script>
 'use strict';
@@ -10335,7 +10394,7 @@ let actx; function beep(ok) {
 let db;
 function openDB() {
   return new Promise((res, rej) => {
-    const r = indexedDB.open('shams-scan', 1);
+    const r = indexedDB.open(DB_NAME, 1);
     r.onupgradeneeded = () => { const d = r.result; d.createObjectStore('ops', {keyPath: 'id'}); d.createObjectStore('meta', {keyPath: 'k'}); };
     r.onsuccess = () => { db = r.result; res(db); }; r.onerror = () => rej(r.error);
   });
@@ -10378,7 +10437,7 @@ async function swSetup() {
   try {
     await navigator.serviceWorker.register('sw.js');
     const reg = await navigator.serviceWorker.ready;
-    const ok = await caches.has('shams-scan-' + APP_VER);
+    const ok = await caches.has(CACHE_PFX + APP_VER);
     $('#offPill').textContent = ok ? '✓ جاهز يشتغل بدون نت' : 'جاري التجهيز للعمل بدون نت…';
     $('#offPill').className = 'pill ' + (ok ? 'ok' : 'off');
     if (!ok) setTimeout(swSetup, 1500);
@@ -10391,7 +10450,7 @@ if (matchMedia('(display-mode: standalone)').matches || navigator.standalone) { 
 
 // ---------------- navigation ----------------
 document.querySelectorAll('nav button').forEach(b => b.onclick = () => showPage(b.dataset.p));
-function showPage(p) { document.querySelectorAll('main>section').forEach(s => s.classList.toggle('hide', s.id !== p)); document.querySelectorAll('nav button').forEach(b => b.classList.toggle('on', b.dataset.p === p)); if (p !== 'pScan') stopCam(); if (p === 'pOps') renderOps(); if (p === 'pExp') renderExp(); scrollTo(0, 0); }
+function showPage(p) { document.querySelectorAll('main>section').forEach(s => s.classList.toggle('hide', s.id !== p)); document.querySelectorAll('nav button').forEach(b => b.classList.toggle('on', b.dataset.p === p)); if (p !== 'pScan') stopCam(); if (p === 'pOps') renderOps(); if (p === 'pExp') renderExp(); if (p === 'pCard') cardEnter(); scrollTo(0, 0); }
 
 // ---------------- camera scanning ----------------
 let stream = null, scanning = false, detector = null, track = null, torchOn = false;
@@ -10417,7 +10476,7 @@ async function startCam() {
 function camFail(msg) { const e = $('#camErr'); e.textContent = msg; e.classList.remove('hide'); stopCam(); }
 function stopCam() { scanning = false; if (stream) stream.getTracks().forEach(t => t.stop()); stream = null; track = null; torchOn = false; $('#cam').style.display = 'none'; $('#scanCard').classList.remove('hide'); }
 $('#torchBtn').onclick = async () => { try { torchOn = !torchOn; await track.applyConstraints({advanced: [{torch: torchOn}]}); } catch (e) {} };
-$('#stopBtn').onclick = stopCam;
+$('#stopBtn').onclick = () => { const back = cardScan; cardScan = false; stopCam(); if (back) showPage('pCard'); };
 $('#scanBtn').onclick = startCam;
 
 function decodeCanvas(w, h, both) {
@@ -10474,9 +10533,9 @@ $('#searchInput').oninput = () => {
 
 // ---------------- form ----------------
 let cur = null; // {raw, code, src, editId, dupAck}
-let mode = 'issue'; try { if (localStorage.getItem('shams-mode') === 'receipt') mode = 'receipt'; } catch (e) {}
+let mode = 'issue'; try { if (localStorage.getItem(LS_PFX + 'mode') === 'receipt') mode = 'receipt'; } catch (e) {}
 const isRcv = () => mode === 'receipt';
-function setMode(m, keep) { mode = m; try { localStorage.setItem('shams-mode', m); } catch (e) {}
+function setMode(m, keep) { mode = m; try { localStorage.setItem(LS_PFX + 'mode', m); } catch (e) {}
   document.querySelectorAll('.modes button').forEach(b => b.classList.toggle('on', b.dataset.m === m)); document.body.classList.toggle('rcv', m === 'receipt');
   $('#scanBtn').textContent = m === 'receipt' ? '📷 اسكان صنف التوريدة' : '📷 اسكان باركود';
   if (!keep) { cur = null; $('#formCard').classList.add('hide'); } }
@@ -10486,6 +10545,7 @@ const opKind = o => o.kind || 'issue';
 let lastScan = {code: null, t: 0};
 async function onDecoded(raw, src) {
   const code = normCode(raw);
+  if (cardScan) { cardScan = false; stopCam(); beep(CAT.has(code)); openCard(code); return; }
   const now = Date.now();
   if (src !== 'بحث يدوي' && code === lastScan.code && now - lastScan.t < 4000 && cur && cur.code === code) { toast('نفس الكود اتقرا تاني — اتجاهل'); return; }
   lastScan = {code, t: now};
@@ -10529,7 +10589,9 @@ async function lookup(withSound) {
       <div class="kv"><div><small>الوحدة</small><span>${esc(r[2] || '—')}</span></div><div><small>الرصيد الدفتري</small><span>${fmt(r[3])}</span></div><div><small>صرف لم يُسجل (في الشيت)</small><span>${fmt(r[5] || 0)}</span></div>
       <div><small>صرف على الموبايل</small><span>${fmt(pi)}</span></div><div><small>إضافة على الموبايل</small><span>${fmt(pr)}</span></div><div class="hi"><small>المتاح تقريبًا</small><span>${fmt(avail)} ${esc(r[2] || '')}</span></div></div>
       ${r[4] !== null && r[4] !== undefined ? `<p class="muted">الجرد الفعلي في الملف: ${fmt(r[4])}</p>` : ''}
-      <p class="muted">الأرصدة من الدليل بتاريخ ${esc(CAT_DATE)} — مش لحظية.</p></div>`;
+      <p class="muted">الأرصدة من الدليل بتاريخ ${esc(CAT_DATE)} — مش لحظية.</p>
+      <button class="btn ghost" id="cardFromScan" style="width:100%;margin-top:4px">📒 عرض حركة الصنف</button></div>`;
+    $('#cardFromScan').onclick = () => { const c = cur.code; $('#formCard').classList.add('hide'); cur = null; openCard(c); };
     cur.avail = avail;
   }
   if (isRcv()) fillPoList(code);
@@ -10765,14 +10827,15 @@ $('#catInput').onchange = async e => {
   const f = e.target.files[0]; e.target.value = ''; const msg = $(catMsgTarget); catMsgTarget = '#catMsg'; if (!f) return;
   msg.innerHTML = '<div class="alert warn">جاري القراءة…</div>';
   try {
-    const {rows, workers, pos} = await readStockSheet(f);
+    const {rows, workers, pos, moves, types, site, qsp} = await readStockSheet(f);
     if (rows.length < 10) throw new Error('لقيت ' + rows.length + ' صنف بس — اتأكد إنه ملف المخزن.');
     const d = new Date(f.lastModified || Date.now()); const ds = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
     await setMeta('catalog', {rows, date: ds, src: f.name});
     if (workers.length) await setMeta('workers', workers);
     await setMeta('pos', pos); POS = pos;
+    await setMeta('ledger', {moves: moves || [], types, site, qsp, ok: !!moves, date: ds, src: f.name}); LEDGER = null;
     loadCat(rows, ds, f.name); fillRcpts(); fillSup();
-    const okHtml = `<div class="alert ok"><b>✓ اتحدّث الدليل</b>${rows.length} صنف${workers.length ? ' و' + workers.length + ' اسم عامل' : ''} من «${esc(f.name)}» — محفوظين على الموبايل ده بس.</div>`;
+    const okHtml = `<div class="alert ok"><b>✓ اتحدّث الدليل</b>${rows.length} صنف${workers.length ? ' و' + workers.length + ' اسم عامل' : ''}${moves ? ' و' + moves.length.toLocaleString('en-US') + ' حركة' : ''} من «${esc(f.name)}» — محفوظين على الموبايل ده بس.${moves ? '' : '<br>⚠ ما لقيتش شيت «المدخلات»، فكارت الصنف مش هيبقى فيه حركات.'}</div>`;
     msg.innerHTML = okHtml; $('#catMsg').innerHTML = okHtml; if (!$('#pScan').classList.contains('hide')) toast('✓ الدليل جاهز — تقدر تعمل اسكان');
   } catch (x) { msg.innerHTML = `<div class="alert bad"><b>مقدرتش أقرا الملف</b>${esc(x.message)}</div>`; }
 };
@@ -10827,6 +10890,40 @@ async function readStockSheet(f) {
     for (const r of wd.getElementsByTagName('row')) { const m = {}; for (const c of r.getElementsByTagName('c')) m[colOf(c.getAttribute('r'))] = val(c);
       if (!col) { for (const [c, v] of Object.entries(m)) if (typeof v === 'string' && v.trim() === 'اسم العامل') col = c; continue; }
       const v = m[col]; if (typeof v === 'string' && v.trim()) workers.push(v.trim()); } } } catch (e) {}
+  // ---- fast regex reader for big sheets (المدخلات can be 10+ MB)
+  const xdec = t => t.replace(/&(#x?[0-9a-fA-F]+|amp|lt|gt|quot|apos);/g, (m, e) => e === 'amp' ? '&' : e === 'lt' ? '<' : e === 'gt' ? '>' : e === 'quot' ? '"' : e === 'apos' ? "'" : String.fromCodePoint(e[1] === 'x' ? parseInt(e.slice(2), 16) : parseInt(e.slice(1), 10)));
+  function fastRows(xml, want) { // want: Set of column letters; returns [[rowNo, {COL: value}]]
+    const out = [], reRow = /<row [^>]*?r="(\d+)"[^>]*?(?:\/>|>([\s\S]*?)<\/row>)/g, reC = /<c r="([A-Z]+)\d+"([^>]*?)(?:\/>|>([\s\S]*?)<\/c>)/g;
+    let m; while ((m = reRow.exec(xml))) { if (!m[2]) continue; const o = {}; let c; reC.lastIndex = 0;
+      while ((c = reC.exec(m[2]))) { if (want && !want.has(c[1])) continue; const body = c[3]; if (!body) continue; const tm = /t="(\w+)"/.exec(c[2]); const t = tm ? tm[1] : '';
+        let v;
+        if (t === 'inlineStr') v = xdec((body.match(/<t[^>]*>([\s\S]*?)<\/t>/g) || []).map(x => x.replace(/<[^>]+>/g, '')).join(''));
+        else { const vm = /<v>([\s\S]*?)<\/v>/.exec(body); if (!vm) continue; v = vm[1];
+          if (t === 's') v = sst[+v]; else if (t === 'str' || t === 'e') v = xdec(v); else if (t === 'b') v = v === '1'; else v = v === '' ? null : Number(v); }
+        o[c[1]] = v; }
+      out.push([+m[1], o]); }
+    return out; }
+  const findHdr = (rws, names) => { for (const [rn, o] of rws.slice(0, 15)) { const inv = {}; for (const [c, v] of Object.entries(o)) if (typeof v === 'string') inv[v.trim()] = c; if (names.every(n => inv[n])) return {rn, col: inv}; } return null; };
+  // movement types and signs («الإعدادات»)
+  let types = {}, site = '';
+  try { const sp = sheetPath('الإعدادات'); if (sp && z[sp]) { const rws = fastRows(await z[sp]()); const h = findHdr(rws, ['نوع الحركة', 'الإشارة', 'التصنيف']);
+    if (h) for (const [rn, o] of rws) { if (rn <= h.rn) continue; const nm = o[h.col['نوع الحركة']], sg = o[h.col['الإشارة']]; if (typeof nm === 'string' && (sg === 1 || sg === -1)) types[nm.trim()] = [sg, String(o[h.col['التصنيف']] || '')]; }
+    for (const [, o] of rws) for (const [c, v] of Object.entries(o)) if (v === 'اسم الموقع') { const nx = String.fromCharCode(c.charCodeAt(0) + 1); if (o[nx]) site = String(o[nx]); } } } catch (e) {}
+  // all movements («المدخلات»)
+  let moves = null;
+  try { const mp = sheetPath('المدخلات'); if (mp && z[mp]) { const rws = fastRows(await z[mp]());
+    const h = findHdr(rws, ['كود الصنف', 'الكمية', 'التاريخ', 'نوع الحركة']);
+    if (h) { const C = h.col; moves = [];
+      for (const [rn, o] of rws) { if (rn <= h.rn) continue; const code = o[C['كود الصنف']]; if (code === null || code === undefined || code === '') continue;
+        const q = Number(o[C['الكمية']]); const d = o[C['التاريخ']];
+        moves.push([String(code).trim(), typeof d === 'number' ? d : null, isNaN(q) ? 0 : q, String(o[C['نوع الحركة']] ?? '').trim(), String(o[C['رقم الإذن']] ?? '').trim(),
+          String(o[C['بيان الحركة']] ?? '').trim(), String(o[C['الجهة / المورد']] ?? '').trim(), String(o[C['أمر التوريد PO']] ?? '').trim(), rn, String(o[C['المجموعة']] ?? '').trim()]); } } } } catch (e) { moves = null; }
+  // issues still pending in «صرف سريع بالاسكانر» (not «نعم»)
+  let qsp = [];
+  try { const qp = sheetPath('صرف سريع بالاسكانر'); if (qp && z[qp]) { const rws = fastRows(await z[qp]()); const h = findHdr(rws, ['كود الصنف (اسكان)', 'الكمية المصروفة']);
+    if (h) { const C = h.col; for (const [rn, o] of rws) { if (rn <= h.rn) continue; const code = o[C['كود الصنف (اسكان)']]; const q = Number(o[C['الكمية المصروفة']]);
+      if (!code || !(q > 0) || String(o[C['اتسجل على السيستم؟']] ?? '').trim() === 'نعم') continue;
+      qsp.push([String(code).trim(), typeof o[C['التاريخ']] === 'number' ? o[C['التاريخ']] : null, q, String(o[C['المستلم / الجهة']] ?? ''), String(o[C['رقم طلب الصرف']] ?? ''), rn]); } } } } catch (e) {}
   // purchase orders («أوامر التوريد»): PO, code, supplier, PO qty, received, remaining — optional
   let pos = [];
   try { const pp = sheetPath('أوامر التوريد'); if (pp && z[pp]) { const pd = P(await z[pp]()); let hr2 = null, c2 = {};
@@ -10835,8 +10932,154 @@ async function readStockSheet(f) {
       if (!hr2) { const inv = {}; for (const [c, v] of Object.entries(m)) if (typeof v === 'string') inv[v.trim()] = c; if (inv[want2.po] && inv[want2.code]) { hr2 = 1; for (const k in want2) c2[k] = inv[want2[k]]; } continue; }
       const po = m[c2.po], code = m[c2.code]; if (po === null || po === undefined || po === '' || !code) continue;
       pos.push({po: String(po), code: String(code), sup: String(m[c2.sup] ?? ''), qty: num(m[c2.qty]) || 0, rec: num(m[c2.rec]) || 0, rem: num(m[c2.rem]) ?? 0}); } } } catch (e) {}
-  return {rows, workers: [...new Set(workers)], pos};
+  return {rows, workers: [...new Set(workers)], pos, moves, types, site, qsp};
 }
+
+// ---------------- stock movement card (read-only) ----------------
+let LEDGER = null, cardCode = null, cardLimit = 300;
+const DEF_TYPES = {'إذن استلام': [1, 'وارد'], 'اضافه': [1, 'وارد'], 'تحويل من': [1, 'تحويل وارد'], 'جرد أ.م': [1, 'جرد وتسوية'], 'تسليم مرتجع شراء': [1, 'جرد وتسوية'], 'صرف': [-1, 'منصرف'], 'اعتماد صرف مقاول بالخصم': [-1, 'منصرف'], 'تحويل إلي': [-1, 'تحويل صادر']};
+async function ledger() { if (LEDGER) return LEDGER; const l = (await getMeta('ledger')) || {moves: [], types: {}, site: '', qsp: [], ok: false};
+  const types = Object.assign({}, DEF_TYPES, l.types || {}); const by = new Map();
+  for (const m of l.moves) { if (!by.has(m[0])) by.set(m[0], []); by.get(m[0]).push(m); }
+  for (const arr of by.values()) arr.sort((a, b) => ((a[1] ?? 0) - (b[1] ?? 0)) || (a[8] - b[8]));
+  LEDGER = {...l, types, by}; return LEDGER; }
+function kindOf(type, types) { const t = types[type]; const cat = t ? t[1] : '';
+  if (/مرتجع/.test(type)) return ['مرتجع', 'k-ret'];
+  if (/تحويل/.test(cat) || /تحويل/.test(type)) return ['تحويل', 'k-tr'];
+  if (cat === 'وارد') return ['وارد', 'k-in']; if (cat === 'منصرف') return ['منصرف', 'k-out'];
+  if (/جرد|تسوية/.test(cat)) return ['تسوية', 'k-adj']; return [type || '—', 'k-adj']; }
+const signOf = (type, types) => types[type] ? types[type][0] : null;
+const xlDate = v => { if (v === null || v === undefined || v === '') return null; const ms = Math.round((v - 25569) * 864e5); return new Date(ms); };
+const fmtDT = v => { const d = xlDate(v); if (!d) return '—'; const iso = d.toISOString(); const t = iso.slice(11, 16); return iso.slice(0, 10) + (t !== '00:00' ? ' ' + t : ''); };
+const dateSerial = s => s ? (Date.UTC(+s.slice(0, 4), +s.slice(5, 7) - 1, +s.slice(8, 10)) / 864e5 + 25569) : null;
+
+function cardEnter() { if (cardCode && $('#cInfo')) renderCard(); else { cardCode = null; $('#cBody').innerHTML = ''; setTimeout(() => $('#cSearch').focus(), 50); } }
+$('#cSearch').oninput = () => {
+  const q = $('#cSearch').value.trim(); const box = $('#cResults');
+  if (q.length < 2) { box.innerHTML = ''; return; } const ws = q.split(/\s+/); const out = [];
+  for (const r of CAT.values()) { const hay = r[0] + ' ' + r[1]; if (ws.every(w => hay.includes(w))) { out.push(r); if (out.length >= 40) break; } }
+  box.innerHTML = out.length ? out.map(r => `<div data-c="${esc(r[0])}"><b>${esc(r[1])}</b><small class="code">${esc(r[0])} · ${esc(r[6])} · رصيد ${fmt(r[3])} ${esc(r[2])}</small></div>`).join('') : '<p class="muted">مفيش صنف بالكلام ده في الدليل.</p>';
+  box.querySelectorAll('div[data-c]').forEach(d => d.onclick = () => openCard(d.dataset.c));
+};
+$('#cScanBtn').onclick = () => { cardScan = true; showPage('pScan'); startCam(); };
+let cardScan = false;
+
+async function openCard(code) {
+  showPage('pCard'); cardCode = code; cardLimit = 300; $('#cResults').innerHTML = ''; $('#cSearch').value = '';
+  const r = CAT.get(code), L = await ledger(), box = $('#cBody');
+  if (!r) { box.innerHTML = `<div class="alert bad"><b>⛔ الصنف ده مش في دليل الأكواد على الموبايل</b><span class="code" style="display:block">${esc(code)}</span>دوّر بالاسم، أو حدّث الدليل من «تصدير وإعدادات».</div>`; return; }
+  const f = cardFilters();
+  box.innerHTML = `<div class="card"><div class="row" style="align-items:flex-start"><div style="flex:1;min-width:0"><b style="font-size:17px;color:var(--navy)">${esc(r[1])}</b><div class="code">${esc(code)}</div></div><button class="btn ghost" id="cClose" style="flex:0 0 auto;padding:8px 12px">✕</button></div>
+    <div class="ckv" id="cInfo"></div></div>
+    <div class="card"><b style="color:var(--navy)">فلاتر</b>
+    <div class="cfil"><div><label for="fFrom">من تاريخ</label><input type="date" id="fFrom" value="${f.from}"></div><div><label for="fTo">إلى تاريخ</label><input type="date" id="fTo" value="${f.to}"></div>
+    <div><label for="fKind">نوع الحركة</label><select id="fKind"><option value="">كل الحركات</option><option value="in">الوارد بس</option><option value="out">المنصرف بس</option><option value="تسوية">تسويات</option><option value="تحويل">تحويلات</option><option value="مرتجع">مرتجعات</option></select></div>
+    <div><label for="fDoc">رقم الإذن</label><input id="fDoc" inputmode="numeric" class="code" value="${esc(f.doc)}"></div>
+    <div style="grid-column:span 2"><label for="fParty">الجهة / المورد / المستلم</label><input id="fParty" value="${esc(f.party)}"></div>
+    <div style="grid-column:span 2"><label for="fWh">المخزن</label><select id="fWh" disabled><option>${esc(L.site || 'مخزن الموقع')}</option></select></div></div>
+    <div class="row" style="margin-top:8px"><button class="btn ghost" id="fReset">مسح الفلاتر</button><button class="btn" id="cPrint">🖨️ طباعة كارت الحركة</button></div>
+    <div class="chk"><input type="checkbox" id="pAll"><span>اطبع كل الحركات (من غير الفلاتر)</span></div></div>
+    <div id="cSum"></div><div id="cTable"></div><div id="cPend"></div>`;
+  $('#fKind').value = f.kind;
+  $('#cClose').onclick = () => { cardCode = null; box.innerHTML = ''; $('#cSearch').focus(); };
+  ['fFrom', 'fTo', 'fKind', 'fDoc', 'fParty'].forEach(id => $('#' + id).oninput = () => { cardLimit = 300; renderCard(); });
+  $('#fReset').onclick = () => { ['fFrom', 'fTo', 'fDoc', 'fParty'].forEach(id => $('#' + id).value = ''); $('#fKind').value = ''; renderCard(); };
+  $('#cPrint').onclick = () => printCard();
+  await renderCard();
+  scrollTo(0, 0);
+}
+function cardFilters() { const g = id => ($('#' + id) ? $('#' + id).value : ''); return {from: g('fFrom'), to: g('fTo'), kind: g('fKind'), doc: g('fDoc').trim(), party: g('fParty').trim()}; }
+
+// computes everything from the imported «المدخلات» rows + things not yet in the file. Never writes anything.
+async function cardData(code, f) {
+  const L = await ledger(), r = CAT.get(code), moves = L.by.get(code) || [];
+  let bal = 0, unknownTypes = new Set(), noDate = 0; const rows = [];
+  for (const m of moves) { let sg = signOf(m[3], L.types); if (sg === null) { unknownTypes.add(m[3]); sg = 0; }
+    const sq = m[2] * sg; bal += sq; if (m[1] === null) noDate++;
+    const [kname, kcls] = kindOf(m[3], L.types);
+    rows.push({d: m[1], doc: m[4], type: m[3], kname, kcls, desc: m[5], party: m[6], po: m[7], inq: sq > 0 ? sq : 0, outq: sq < 0 ? -sq : 0, bal, row: m[8], dir: sq > 0 ? 'in' : sq < 0 ? 'out' : ''}); }
+  const fromS = dateSerial(f.from), toS = f.to ? dateSerial(f.to) + 1 : null;
+  let opening = 0; for (const x of rows) if (fromS !== null && x.d !== null && x.d < fromS) opening = x.bal;
+  const inPeriod = rows.filter(x => (fromS === null || (x.d !== null && x.d >= fromS)) && (toS === null || (x.d !== null && x.d < toS)));
+  let closing = opening; for (const x of inPeriod) closing = x.bal;
+  if (!inPeriod.length && fromS !== null) closing = opening;
+  if (fromS === null) opening = 0;
+  const pin = inPeriod.reduce((a, x) => a + x.inq, 0), pout = inPeriod.reduce((a, x) => a + x.outq, 0);
+  let shown = inPeriod;
+  if (f.kind === 'in') shown = shown.filter(x => x.dir === 'in'); else if (f.kind === 'out') shown = shown.filter(x => x.dir === 'out'); else if (f.kind) shown = shown.filter(x => x.kname === f.kind);
+  if (f.doc) shown = shown.filter(x => x.doc.includes(f.doc)); if (f.party) shown = shown.filter(x => (x.party + ' ' + x.desc).includes(f.party));
+  // not yet in the file: «صرف سريع» rows not «نعم» + phone operations not found in the file
+  const pend = [];
+  for (const q of (L.qsp || []).filter(q => q[0] === code)) pend.push({src: 'صرف سريع — لسه ما اتسجلش على السيستم', d: q[1], doc: q[4], party: q[3], inq: 0, outq: q[2], key: 'qs' + q[5], m: q});
+  const ops = (await allOps()).filter(o => o.code === code);
+  for (const o of ops) {
+    if (opKind(o) === 'receipt') { const inFile = moves.some(m => m[4] === String(o.dn) && m[3] === (o.rtype || 'إذن استلام')); if (inFile) continue;
+      pend.push({src: o.status === 'new' ? 'إضافة على الموبايل — لسه ما اتصدّرتش' : 'إضافة اتصدّرت — مش ظاهرة في الملف اللي اتستورد', d: dateSerial(o.date), doc: o.dn, party: o.supplier, inq: Number(o.qty), outq: 0}); }
+    else { const inSheet = (L.qsp || []).some(q => q[0] === code && Math.abs(q[2] - o.qty) < 1e-9 && String(q[4]) === String(o.req || '') && (q[1] === null || Math.floor(q[1]) === dateSerial(o.date)));
+      if (inSheet) continue;
+      pend.push({src: o.status === 'new' ? 'صرف على الموبايل — لسه ما اتصدّرش' : 'صرف اتصدّر — مش ظاهر في الملف اللي اتستورد', d: dateSerial(o.date), doc: o.req, party: o.rcpt, inq: 0, outq: Number(o.qty)}); } }
+  const pendNet = pend.reduce((a, p) => a + p.inq - p.outq, 0);
+  return {r, L, rows, inPeriod, shown, opening, closing, pin, pout, current: rows.length ? rows[rows.length - 1].bal : 0, pend, pendNet, unknownTypes: [...unknownTypes], noDate,
+    totIn: rows.reduce((a, x) => a + x.inq, 0), totOut: rows.reduce((a, x) => a + x.outq, 0), group: (moves.find(m => m[9]) || [])[9] || ''}; }
+
+async function renderCard() {
+  if (!cardCode || !$('#cInfo')) return; const f = cardFilters(); const D = await cardData(cardCode, f); const r = D.r;
+  const first = D.rows.find(x => x.d !== null);
+  const openingAll = first && /جرد|افتتاح/.test(first.type + first.kname) ? first.inq - first.outq : 0;
+  $('#cInfo').innerHTML = `<div class="wide"><small>اسم الصنف</small><span>${esc(r[1])}</span></div>
+    <div><small>كود الصنف</small><span class="code">${esc(r[0])}</span></div><div><small>الوحدة</small><span>${esc(r[2] || '—')}</span></div>
+    <div><small>الوصف / المجموعة</small><span>${esc(D.group || '—')}</span></div><div><small>المخزن · الموقع</small><span>${esc(D.L.site || 'مخزن الموقع')} · ${esc(r[6] || '—')}</span></div>
+    <div><small>رصيد افتتاحي (أول حركة «جرد أ.م»)</small><span>${first ? fmt(openingAll) : '—'}</span></div><div><small>عدد الحركات</small><span>${D.rows.length.toLocaleString('en-US')}</span></div>
+    <div><small>إجمالي الوارد</small><span style="color:var(--ok)">${fmt(D.totIn)}</span></div><div><small>إجمالي المنصرف</small><span style="color:#9a4511">${fmt(D.totOut)}</span></div>
+    <div class="wide"><small>الرصيد الحالي (من حركات الملف)</small><span>${fmt(D.current)} ${esc(r[2] || '')}</span></div>`;
+  const warn = [];
+  if (!D.L.ok) warn.push('ملف المخزن اللي اتستورد مفيهوش شيت «المدخلات» — استورد الملف تاني من «تصدير وإعدادات».');
+  if (D.L.ok && r[3] !== null && Math.abs((r[3] ?? 0) - D.current) > 0.0011) warn.push(`الرصيد المحسوب من الحركات (${fmt(D.current)}) مختلف عن الرصيد الدفتري في «الرصيد والجرد» (${fmt(r[3])}). ممكن الملف ما اتحسبش في Excel قبل ما يتبعت.`);
+  if (D.unknownTypes.length) warn.push('أنواع حركة مش معروفة الإشارة واتحسبت صفر: ' + D.unknownTypes.map(esc).join('، '));
+  if (D.noDate) warn.push(`${D.noDate} حركة من غير تاريخ — بتظهر في أول الجدول ومش بتدخل في فلتر الفترة.`);
+  const per = f.from || f.to ? `الفترة: ${f.from || 'من الأول'} ← ${f.to || 'لحد النهارده'}` : 'كل الفترة';
+  $('#cSum').innerHTML = `${warn.map(w => `<div class="alert warn">${w}</div>`).join('')}
+    <div class="muted" style="margin-top:6px">${per} · بيانات الملف بتاريخ ${esc(D.L.date || '—')}</div>
+    <div class="csum"><div><small>رصيد أول المدة</small><b>${fmt(D.opening)}</b></div><div class="in"><small>وارد الفترة</small><b>${fmt(D.pin)}</b></div><div class="out"><small>منصرف الفترة</small><b>${fmt(D.pout)}</b></div><div><small>رصيد آخر المدة</small><b>${fmt(D.closing)}</b></div></div>`;
+  if (!D.rows.length) { $('#cTable').innerHTML = `<div class="card muted">${D.L.ok ? 'الصنف ده مالوش أي حركة في شيت «المدخلات» اللي اتستورد.' : 'مفيش حركات — لازم تستورد ملف المخزن.'}</div>`; }
+  else {
+    const list = D.shown.slice(0, cardLimit);
+    const openRow = f.from ? `<tr class="open"><td>${esc(f.from)}</td><td></td><td></td><td>رصيد أول المدة</td><td></td><td></td><td class="n"></td><td class="n"></td><td class="n bal">${fmt(D.opening)}</td><td></td></tr>` : '';
+    $('#cTable').innerHTML = `<div class="muted" style="margin-bottom:4px">${D.shown.length.toLocaleString('en-US')} حركة معروضة${D.shown.length > list.length ? ` (أول ${list.length})` : ''} · الرصيد في كل سطر هو الرصيد الفعلي بعد الحركة</div>
+      <div class="ctbl"><table><thead><tr><th>التاريخ</th><th>رقم المستند</th><th>نوع الحركة</th><th>البيان</th><th>الموقع / المشروع</th><th>المستلم / المورد</th><th>وارد</th><th>منصرف</th><th>الرصيد</th><th>المستخدم</th></tr></thead><tbody>
+      ${openRow}${list.map(x => `<tr><td class="n">${fmtDT(x.d)}</td><td class="n code">${esc(x.doc || '—')}</td><td><span class="tk ${x.kcls}">${esc(x.kname)}</span><div class="muted" style="font-size:11px">${esc(x.type)}</div></td><td>${esc(x.desc || '—')}${x.po ? `<div class="muted" style="font-size:11px">PO ${esc(x.po)}</div>` : ''}</td><td>—</td><td>${esc(x.party || '—')}</td><td class="n in">${x.inq ? fmt(x.inq) : ''}</td><td class="n out">${x.outq ? fmt(x.outq) : ''}</td><td class="n bal">${fmt(x.bal)}</td><td>—</td></tr>`).join('')}
+      </tbody></table></div>${D.shown.length > list.length ? '<button class="btn ghost" id="cMore" style="width:100%;margin-top:8px">اعرض أكتر</button>' : ''}
+      <p class="muted">«الموقع / المشروع» و«المستخدم» مش متسجلين في شيت «المدخلات»، فبيظهروا «—».</p>`;
+    if ($('#cMore')) $('#cMore').onclick = () => { cardLimit += 500; renderCard(); };
+  }
+  $('#cPend').innerHTML = D.pend.length ? `<div class="card"><b style="color:var(--warn)">⏳ حركات لسه مش في ملف المخزن (تقديري — مش رصيد نهائي)</b>
+    <div class="ctbl" style="margin-top:6px"><table><thead><tr><th>المصدر</th><th>التاريخ</th><th>المستند / الطلب</th><th>المستلم / المورد</th><th>وارد</th><th>منصرف</th></tr></thead><tbody>
+    ${D.pend.map(p => `<tr class="pend"><td>${esc(p.src)}</td><td class="n">${p.d ? fmtDT(p.d) : '—'}</td><td class="n code">${esc(p.doc || '—')}</td><td>${esc(p.party || '—')}</td><td class="n in">${p.inq ? fmt(p.inq) : ''}</td><td class="n out">${p.outq ? fmt(p.outq) : ''}</td></tr>`).join('')}
+    </tbody></table></div><p class="muted">الرصيد الرسمي من الملف: <b>${fmt(D.current)}</b> · بعد الحركات دي تقديريًا: <b>${fmt(D.current + D.pendNet)}</b>. الحركات دي بتتشال من هنا لوحدها لما تتلصق في الشيت وتستورد الملف تاني.</p></div>` : '';
+}
+
+async function printCard() {
+  const all = $('#pAll').checked; const f = all ? {from: '', to: '', kind: '', doc: '', party: ''} : cardFilters();
+  const D = await cardData(cardCode, f), r = D.r; const co = (await getMeta('company')) || '';
+  const now = new Date(); const stamp = today() + ' ' + String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
+  const kindTxt = {'': '', in: 'الوارد بس', out: 'المنصرف بس'}[f.kind] ?? f.kind;
+  const filt = [kindTxt && 'النوع: ' + kindTxt, f.doc && 'رقم الإذن: ' + f.doc, f.party && 'الجهة: ' + f.party].filter(Boolean).join(' · ');
+  const sIn = D.shown.reduce((a, x) => a + x.inq, 0), sOut = D.shown.reduce((a, x) => a + x.outq, 0);
+  $('#printArea').innerHTML = `<div class="hdr"><div><div style="font-weight:bold;font-size:13px">${esc(co || '—')}</div><div>${esc(D.L.site || 'مخزن الموقع')}</div><h1>كارت حركة صنف</h1></div>
+    <div style="text-align:left">تاريخ ووقت الاستخراج: <span class="n">${stamp}</span><br>بيانات الملف بتاريخ: ${esc(D.L.date || '—')}</div></div>
+    <div class="info"><div><b>الكود:</b> <span class="n">${esc(r[0])}</span></div><div style="grid-column:span 2"><b>الصنف:</b> ${esc(r[1])}</div><div><b>الوحدة:</b> ${esc(r[2] || '—')}</div>
+    <div><b>المجموعة:</b> ${esc(D.group || '—')}</div><div><b>المخزن / الموقع:</b> ${esc(D.L.site || '—')} · ${esc(r[6] || '—')}</div><div><b>الفترة:</b> ${f.from || f.to ? esc((f.from || 'من الأول') + ' ← ' + (f.to || stamp.slice(0, 10))) : 'كل الحركات'}</div><div>${filt ? '<b>فلاتر:</b> ' + esc(filt) : ''}</div></div>
+    <table><thead><tr><th>م</th><th>التاريخ</th><th>رقم المستند</th><th>نوع الحركة</th><th>البيان</th><th>الموقع / المشروع</th><th>المستلم / المورد</th><th>وارد</th><th>منصرف</th><th>الرصيد</th><th>المستخدم</th></tr></thead><tbody>
+    ${f.from ? `<tr><td></td><td class="n">${esc(f.from)}</td><td></td><td></td><td><b>رصيد أول المدة</b></td><td></td><td></td><td></td><td></td><td class="n"><b>${fmt(D.opening)}</b></td><td></td></tr>` : ''}
+    ${D.shown.map((x, i) => `<tr><td class="n">${i + 1}</td><td class="n">${fmtDT(x.d)}</td><td class="n">${esc(x.doc || '—')}</td><td>${esc(x.kname)} — ${esc(x.type)}</td><td>${esc(x.desc || '—')}${x.po ? ' · PO ' + esc(x.po) : ''}</td><td>—</td><td>${esc(x.party || '—')}</td><td class="n">${x.inq ? fmt(x.inq) : ''}</td><td class="n">${x.outq ? fmt(x.outq) : ''}</td><td class="n">${fmt(x.bal)}</td><td>—</td></tr>`).join('') || '<tr><td colspan="11">مفيش حركات</td></tr>'}
+    </tbody></table>
+    <div class="tot"><span>رصيد أول المدة: ${fmt(D.opening)}</span><span>إجمالي وارد الفترة: ${fmt(D.pin)}</span><span>إجمالي منصرف الفترة: ${fmt(D.pout)}</span><span>الرصيد الختامي: ${fmt(D.closing)}</span>${filt ? `<span>(المعروض بالفلتر: وارد ${fmt(sIn)} · منصرف ${fmt(sOut)})</span>` : ''}</div>
+    ${D.pend.length ? `<div class="note">⚠ فيه ${D.pend.length} حركة على الموبايل أو في «صرف سريع» لسه مش في ملف المخزن ومش داخلة في الكارت (صافي ${fmt(D.pendNet)}).</div>` : ''}
+    <div class="note">المصدر: شيت «المدخلات» في ملف المخزن. «الموقع / المشروع» و«المستخدم» مش متسجلين في الملف.</div>
+    <div class="sig"><div><b>أمين المخزن</b><br><br>الاسم: ....................<br>التوقيع: ....................</div><div><b>المراجع</b><br><br>الاسم: ....................<br>التوقيع: ....................</div><div><b>مدير المخازن</b><br><br>الاسم: ....................<br>التوقيع: ....................</div></div>`;
+  setTimeout(() => window.print(), 60);
+}
+$('#coName').onchange = async () => { await setMeta('company', $('#coName').value.trim()); toast('اتحفظ اسم الشركة'); };
 
 // ---------------- boot ----------------
 (async () => {
@@ -10845,6 +11088,8 @@ async function readStockSheet(f) {
   if (c && c.rows && c.rows.length) loadCat(c.rows, c.date, c.src); else loadCat([], '', '');
   try { POS = (db && await getMeta('pos')) || []; } catch (e) {}
   setMode(mode); if (db) fillSup();
+  try { $('#coName').value = (db && await getMeta('company')) || ''; } catch (e) {}
+  if (FLAVOR === 'dev') { const b = document.createElement('div'); b.className = 'devbar'; b.textContent = 'نسخة تطوير — كارت الصنف (مش نسخة التشغيل)'; document.body.prepend(b); }
   if (db) { fillRcpts(); updateCount(); }
   try { if (navigator.storage && navigator.storage.persist) await navigator.storage.persist(); } catch (e) {}
   swSetup();
