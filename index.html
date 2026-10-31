@@ -188,7 +188,7 @@ nav button{font-size:12px}
 
     <div id="fields">
       <div class="row">
-        <div><label id="qtyLbl">الكمية المصروفة *</label><input id="fQty" type="number" inputmode="decimal" min="0" step="any"></div>
+        <div><label><span id="qtyLbl">الكمية المصروفة *</span> <b id="fUnit" style="color:var(--navy)"></b></label><input id="fQty" type="number" inputmode="decimal" min="0" step="any"></div>
         <div><label>التاريخ</label><input id="fDate" type="date"></div>
       </div>
       <div id="issueFields">
@@ -197,6 +197,8 @@ nav button{font-size:12px}
       <datalist id="rcptList"></datalist>
       <label>رقم طلب الصرف</label>
       <input id="fReq" autocomplete="off" inputmode="text">
+      <label for="fVou">رقم إذن الصرف</label>
+      <input id="fVou" autocomplete="off" inputmode="numeric" class="code">
       </div>
       <div id="rcvFields" class="hide">
       <label for="fType">نوع الحركة</label>
@@ -236,7 +238,7 @@ nav button{font-size:12px}
     <p class="muted" id="expInfo"></p>
     <button class="btn big" id="exportBtn">📤 صدّر العمليات الجديدة (ملف Excel)</button>
     <button class="btn ghost" id="exportAllBtn" style="width:100%;margin-top:8px">صدّر كل العمليات اللي على الموبايل</button>
-    <p class="muted">الملف فيه 3 ورقات: «صرف — للصق في صرف سريع» (أعمدة C إلى K)، و«إضافة — للصق في المدخلات» (أعمدة B إلى N)، و«مراجعة». التصدير <b>مش</b> بيضيف حاجة للشيت لوحده.</p>
+    <p class="muted">الملف فيه 3 ورقات: «صرف — للصق في صرف سريع» (أعمدة C إلى K)، و«إضافة — للصق في المدخلات» (أعمدة B إلى N)، و«مراجعة» (فيها كمان الوحدة ورقم إذن الصرف). التصدير <b>مش</b> بيضيف حاجة للشيت لوحده.</p>
   </div>
   <div class="card">
     <h3 style="margin:0 0 6px;color:var(--navy)">تحديث دليل الأكواد والأرصدة</h3>
@@ -10390,7 +10392,7 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
 /******/ ])["default"];
 });</script>
 <script>
-const APP_VER = "20261021p";
+const APP_VER = "20261031p";
 const DB_NAME = "shams-scan", CACHE_PFX = "shams-scan-", LS_PFX = "shams-", FLAVOR = "prod";
 </script>
 <script>
@@ -10615,10 +10617,11 @@ async function onDecoded(raw, src) {
 }
 function openForm() {
   $('#formCard').classList.remove('hide'); $('#formErr').classList.add('hide');
-  $('#fQty').value = ''; $('#fReq').value = ''; $('#fDate').value = today(); $('#unkChk').checked = false;
+  $('#fQty').value = ''; $('#fReq').value = ''; $('#fVou').value = ''; $('#fDate').value = today(); $('#unkChk').checked = false;
   $('#fPo').value = ''; $('#fSup').value = ''; $('#fDn').value = ''; $('#fPoQty').value = ''; $('#fType').value = 'إذن استلام'; $('#poInfo').innerHTML = ''; $('#poQtyWrap').classList.add('hide');
   $('#issueFields').classList.toggle('hide', isRcv()); $('#rcvFields').classList.toggle('hide', !isRcv());
   $('#qtyLbl').textContent = isRcv() ? 'الكمية المستلمة *' : 'الكمية المصروفة *';
+  $('#fUnit').textContent = '';
   if (!isRcv()) getMeta('lastRcpt').then(v => { if (v && !$('#fRcpt').value) $('#fRcpt').value = v; });
   $('#saveBtn').textContent = isRcv() ? '💾 حفظ الإضافة على الموبايل' : '💾 حفظ على الموبايل'; $('#saveBtn').disabled = false;
 }
@@ -10651,13 +10654,14 @@ async function lookup(withSound) {
     $('#cardFromScan').onclick = () => { const c = cur.code; $('#formCard').classList.add('hide'); cur = null; openCard(c); };
     cur.avail = avail;
   }
+  $('#fUnit').textContent = r && r[2] ? '— الوحدة: ' + r[2] : '';
   try { await invIssueHint(code); } catch (e) {}
   if (isRcv()) fillPoList(code);
   // duplicate check
   const pend = await localPending(code, cur.editId, mode);
   const dup = $('#dupBox');
   if (pend.length && !cur.editId) {
-    dup.innerHTML = `<div class="alert warn"><b>⚠ الصنف ده ${isRcv() ? 'اتضاف' : 'اتصرف'} قبل كده على الموبايل ولسه ما اتصدّرش</b>${pend.map(o => opKind(o) === 'receipt' ? `• ${fmt(o.qty)} — PO ${esc(o.po || '—')} — إذن ${esc(o.dn)} (${esc(o.date)})` : `• ${fmt(o.qty)} — ${esc(o.rcpt)}${o.req ? ' — طلب ' + esc(o.req) : ''} (${esc(o.date)})`).join('<br>')}
+    dup.innerHTML = `<div class="alert warn"><b>⚠ الصنف ده ${isRcv() ? 'اتضاف' : 'اتصرف'} قبل كده على الموبايل ولسه ما اتصدّرش</b>${pend.map(o => opKind(o) === 'receipt' ? `• ${fmt(o.qty)} — PO ${esc(o.po || '—')} — إذن ${esc(o.dn)} (${esc(o.date)})` : `• ${fmt(o.qty)} — ${esc(o.rcpt)}${o.req ? ' — طلب ' + esc(o.req) : ''}${o.vou ? ' — إذن ' + esc(o.vou) : ''} (${esc(o.date)})`).join('<br>')}
       <div class="row" style="margin-top:8px"><button class="btn ghost" id="dupEdit">عدّل القديمة</button><button class="btn org" id="dupNew">${isRcv() ? 'دي إضافة تانية' : 'دي عملية صرف تانية'}</button></div></div>`;
     cur.dupAck = false; $('#saveBtn').disabled = true;
     $('#dupEdit').onclick = () => editOp(pend[pend.length - 1].id);
@@ -10697,7 +10701,7 @@ $('#saveBtn').onclick = async () => {
   const code = normCode($('#fCode').value);
   if (code !== cur.code) { cur.code = code; await lookup(false); if ($('#saveBtn').disabled) return; }
   const qty = Number(String($('#fQty').value).replace(',', '.'));
-  const rcpt = $('#fRcpt').value.trim(), req = $('#fReq').value.trim(), date = $('#fDate').value || today();
+  const rcpt = $('#fRcpt').value.trim(), req = $('#fReq').value.trim(), vou = $('#fVou').value.trim(), date = $('#fDate').value || today();
   if (!code) return err('مفيش كود.');
   if (!CAT.size) return err('مفيش دليل أكواد على الموبايل — استورد ملف المخزن الأول.');
   if (!cur.known && !$('#unkChk').checked) return err('الكود مش موجود في الدليل. صحّحه، أو علّم على «أنا متأكد» لو عايز تحفظه برضه.');
@@ -10715,6 +10719,8 @@ $('#saveBtn').onclick = async () => {
       const v = await modal('الكمية أكبر من المتبقي على الـPO', `المتبقي على أمر التوريد ${po}: ${fmt(cur.po.remNow)}\nالكمية المستلمة: ${fmt(qty)}\nتحفظ برضه؟`, [{t: 'أيوه احفظ', v: 1, cls: 'org'}, {t: 'لا، هراجع', v: 0, cls: 'ghost'}]);
       if (!v) return; }
   } else if (!rcpt) return err('اكتب اسم المستلم أو الجهة.');
+  if (!rcv && vou) { const same = (await allOps()).find(o => opKind(o) === 'issue' && o.id !== cur.editId && o.code === code && String(o.vou || '') === vou);
+    if (same) return err(`الصرف ده متسجل قبل كده بنفس الصنف وإذن الصرف ${vou} (${fmt(same.qty)} — ${same.date}). لو ده صرف تاني فعلًا، صحّح رقم الإذن.`); }
   if (!rcv && cur.known && cur.avail !== undefined && qty > cur.avail + 1e-9) {
     const v = await modal('الكمية أكبر من المتاح', `المتاح تقريبًا ${fmt(cur.avail)} والكمية ${fmt(qty)}.\nتحفظ برضه؟`, [{t: 'أيوه احفظ', v: 1, cls: 'org'}, {t: 'لا، هراجع', v: 0, cls: 'ghost'}]);
     if (!v) return;
@@ -10726,7 +10732,7 @@ $('#saveBtn').onclick = async () => {
     const op = Object.assign(old || {id: Date.now().toString(36) + Math.random().toString(36).slice(2, 7), ts: new Date().toISOString(), status: 'new'}, {
       code, raw: cur.raw ?? code, src: cur.src || '', name: r ? r[1] : '', unit: r ? r[2] : '', bal: r ? r[3] : null, loc: r ? r[6] : '', known: !!r,
       qty, date, edited: old ? new Date().toISOString() : undefined, kind: rcv ? 'receipt' : 'issue'},
-      rcv ? {rtype, po, poQty: cur.po ? null : poQty, supplier: sup, dn, rcpt: '', req: ''} : {rcpt, req});
+      rcv ? {rtype, po, poQty: cur.po ? null : poQty, supplier: sup, dn, rcpt: '', req: '', vou: ''} : {rcpt, req, vou});
     await putOp(op);
     if (rcv) { const l = (await getMeta('sups')) || []; if (!l.includes(sup)) { l.unshift(sup); await setMeta('sups', l.slice(0, 60)); } fillSup(); }
     else { await setMeta('lastRcpt', rcpt); await addRcpt(rcpt); }
@@ -10745,7 +10751,7 @@ async function editOp(id) {
   showPage('pScan'); setMode(opKind(o), true);
   cur = {raw: o.raw, code: o.code, src: o.src, editId: o.id, dupAck: true};
   openForm(); $('#fCode').value = o.code; $('#rawLine').textContent = 'تعديل عملية محفوظة';
-  $('#fQty').value = o.qty; $('#fRcpt').value = o.rcpt || ''; $('#fReq').value = o.req || ''; $('#fDate').value = o.date; $('#unkChk').checked = !o.known;
+  $('#fQty').value = o.qty; $('#fRcpt').value = o.rcpt || ''; $('#fReq').value = o.req || ''; $('#fVou').value = o.vou || ''; $('#fDate').value = o.date; $('#unkChk').checked = !o.known;
   if (opKind(o) === 'receipt') { $('#fType').value = o.rtype || 'إذن استلام'; $('#fPo').value = o.po || ''; $('#fSup').value = o.supplier || ''; $('#fDn').value = o.dn || ''; $('#fPoQty').value = o.poQty ?? ''; }
   $('#saveBtn').textContent = '💾 حفظ التعديل';
   await lookup(false);
@@ -10760,7 +10766,7 @@ async function renderOps() {
   const L = $('#opsList');
   if (!ops.length) { L.innerHTML = `<div class="card muted">${filt === 'new' ? 'مفيش عمليات محفوظة لسه ما اتصدّرتش.' : 'مفيش عمليات.'}</div>`; return; }
   L.innerHTML = ops.map(o => `<div class="card op ${o.status} ${opKind(o) === 'receipt' ? 'rcv' : ''}"><div class="t">${opKind(o) === 'receipt' ? '<span class="kind rcv">إضافة</span>' : '<span class="kind iss">صرف</span>'}${o.known ? esc(o.name) : '⛔ كود مش في الدليل'}</div>
-    <div class="m"><span class="code">${esc(o.code)}</span><br>الكمية: <b>${fmt(o.qty)} ${esc(o.unit)}</b> · ${opKind(o) === 'receipt' ? `${esc(o.rtype)} <b>${esc(o.dn)}</b>${o.po ? ' · PO: <b>' + esc(o.po) + '</b>' : ''} · المورد: <b>${esc(o.supplier)}</b>` : `المستلم: <b>${esc(o.rcpt)}</b>${o.req ? ' · طلب: <b>' + esc(o.req) + '</b>' : ''}`}<br>التاريخ: ${esc(o.date)} · ${o.status === 'new' ? '<span class="st new">محفوظة على الموبايل — لسه ما اتصدّرتش</span>' : '<span class="st exp">اتصدّرت ' + esc((o.exportedAt || '').slice(0, 16).replace('T', ' ')) + ' — اتأكد إنها اتلصقت في الشيت</span>'}</div>
+    <div class="m"><span class="code">${esc(o.code)}</span><br>الكمية: <b>${fmt(o.qty)} ${esc(o.unit)}</b> · ${opKind(o) === 'receipt' ? `${esc(o.rtype)} <b>${esc(o.dn)}</b>${o.po ? ' · PO: <b>' + esc(o.po) + '</b>' : ''} · المورد: <b>${esc(o.supplier)}</b>` : `المستلم: <b>${esc(o.rcpt)}</b>${o.req ? ' · طلب: <b>' + esc(o.req) + '</b>' : ''}${o.vou ? ' · إذن صرف: <b>' + esc(o.vou) + '</b>' : ''}`}<br>التاريخ: ${esc(o.date)} · ${o.status === 'new' ? '<span class="st new">محفوظة على الموبايل — لسه ما اتصدّرتش</span>' : '<span class="st exp">اتصدّرت ' + esc((o.exportedAt || '').slice(0, 16).replace('T', ' ')) + ' — اتأكد إنها اتلصقت في الشيت</span>'}</div>
     <div class="acts">${o.status === 'new' ? `<button class="btn ghost" data-a="edit" data-id="${o.id}">✏️ تعديل</button><button class="btn red" data-a="del" data-id="${o.id}">🗑 حذف</button>` : `<button class="btn ghost" data-a="back" data-id="${o.id}">↩ رجّعها جديدة</button><button class="btn red" data-a="del" data-id="${o.id}">🗑 حذف</button>`}</div></div>`).join('');
   L.querySelectorAll('button[data-a]').forEach(b => b.onclick = async () => {
     const id = b.dataset.id, a = b.dataset.a; const o = (await allOps()).find(x => x.id === id);
@@ -10823,12 +10829,12 @@ function buildXlsx(all) {
     rr.push(`<row r="${r}">${S('B' + r, o.code, 3)}${N('F' + r, o.qty, 4)}${N('G' + r, serial(o.date), 1)}${S('H' + r, o.rtype || 'إذن استلام')}${S('I' + r, o.dn, 3)}${S('J' + r, (o.rtype || 'إذن استلام') + ' ' + o.dn)}${S('K' + r, o.supplier)}${poCell('L' + r, o.po)}${o.poQty != null ? N('M' + r, o.poQty, 4) : ''}</row>`); });
   const cr = '<col min="1" max="1" width="3" customWidth="1"/><col min="2" max="2" width="27" customWidth="1"/><col min="3" max="5" width="11" customWidth="1"/><col min="6" max="7" width="12" customWidth="1"/><col min="8" max="8" width="13" customWidth="1"/><col min="9" max="9" width="12" customWidth="1"/><col min="10" max="11" width="24" customWidth="1"/><col min="12" max="14" width="13" customWidth="1"/>';
   // Sheet 2: review (both kinds)
-  const H2 = ['م', 'النوع', 'التاريخ', 'كود الصنف', 'اسم الصنف (من دليل الموبايل)', 'الوحدة', 'الرصيد الدفتري وقت الدليل', 'الكمية', 'المستلم / المورد', 'رقم طلب الصرف / رقم الإذن', 'أمر التوريد PO', 'وقت الحفظ', 'طريقة القراءة', 'الموقع', 'ملاحظة'];
-  const L2 = 'ABCDEFGHIJKLMNO';
+  const H2 = ['م', 'النوع', 'التاريخ', 'كود الصنف', 'اسم الصنف (من دليل الموبايل)', 'الوحدة', 'الرصيد الدفتري وقت الدليل', 'الكمية', 'المستلم / المورد', 'رقم طلب الصرف / رقم الإذن', 'رقم إذن الصرف', 'أمر التوريد PO', 'وقت الحفظ', 'طريقة القراءة', 'الموقع', 'ملاحظة'];
+  const L2 = 'ABCDEFGHIJKLMNOP';
   const r2 = [`<row r="1" ht="34" customHeight="1">${H2.map((h, i) => S(L2[i] + '1', h, 2)).join('')}</row>`];
   all.forEach((o, i) => { const r = i + 2, k = opKind(o) === 'receipt';
-    r2.push(`<row r="${r}">${N('A' + r, i + 1)}${S('B' + r, k ? (o.rtype || 'إضافة') : 'صرف')}${N('C' + r, serial(o.date), 1)}${S('D' + r, o.code, 3)}${S('E' + r, o.name)}${S('F' + r, o.unit)}${N('G' + r, o.bal, 4)}${N('H' + r, o.qty, 4)}${S('I' + r, k ? o.supplier : o.rcpt)}${S('J' + r, (k ? o.dn : o.req) || '', 3)}${S('K' + r, k ? (o.po || '') : '', 3)}${S('L' + r, new Date(o.ts).toLocaleString('en-GB'))}${S('M' + r, o.src || '')}${S('N' + r, o.loc || '')}${S('O' + r, o.known ? '' : '⚠ الكود مش موجود في دليل الموبايل')}</row>`); });
-  const c2 = '<col min="1" max="3" width="11" customWidth="1"/><col min="4" max="4" width="27" customWidth="1"/><col min="5" max="5" width="40" customWidth="1"/><col min="6" max="8" width="12" customWidth="1"/><col min="9" max="9" width="24" customWidth="1"/><col min="10" max="15" width="15" customWidth="1"/>';
+    r2.push(`<row r="${r}">${N('A' + r, i + 1)}${S('B' + r, k ? (o.rtype || 'إضافة') : 'صرف')}${N('C' + r, serial(o.date), 1)}${S('D' + r, o.code, 3)}${S('E' + r, o.name)}${S('F' + r, o.unit)}${N('G' + r, o.bal, 4)}${N('H' + r, o.qty, 4)}${S('I' + r, k ? o.supplier : o.rcpt)}${S('J' + r, (k ? o.dn : o.req) || '', 3)}${S('K' + r, k ? '' : (o.vou || ''), 3)}${S('L' + r, k ? (o.po || '') : '', 3)}${S('M' + r, new Date(o.ts).toLocaleString('en-GB'))}${S('N' + r, o.src || '')}${S('O' + r, o.loc || '')}${S('P' + r, o.known ? '' : '⚠ الكود مش موجود في دليل الموبايل')}</row>`); });
+  const c2 = '<col min="1" max="3" width="11" customWidth="1"/><col min="4" max="4" width="27" customWidth="1"/><col min="5" max="5" width="40" customWidth="1"/><col min="6" max="8" width="12" customWidth="1"/><col min="9" max="9" width="24" customWidth="1"/><col min="10" max="16" width="15" customWidth="1"/>';
   const files = [
     {name: '[Content_Types].xml', data: '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/worksheets/sheet2.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/worksheets/sheet3.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/></Types>'},
     {name: '_rels/.rels', data: '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>'},
@@ -11771,7 +11777,7 @@ async function invIssueHint(code) {
     const ls = (await cntBySid(S.id)).filter(l => l.code === code && !l.void);
     if (ls.length) out.push(`🧮 الصنف ده اتعدّ في الجرد ${S.no} (${hm(ls.map(l => l.t).sort().pop())}). الحركة دي هتتحسب بعد العد — مش هتعمل فرق وهمي.`);
     else out.push(`🧮 الصنف ده ضمن الجرد ${S.no} ولسه ما اتعدّش. الحركة هتتحسب قبل العد — اعدّه بعد ما الصرف يخلص.`); }
-  if (out.length) $('#lookupBox').insertAdjacentHTML('beforeend', out.map(t => `<div class="alert warn" style="font-size:13px">${esc(t)}</div>`).join(''));
+  if (out.length) $('#lookupBox').insertAdjacentHTML('beforeend', `<div class="alert warn" style="font-size:13px">${out.map(esc).join('<br>')}</div>`);
 }
 
 
