@@ -10392,7 +10392,7 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
 /******/ ])["default"];
 });</script>
 <script>
-const APP_VER = "20261031p";
+const APP_VER = "20261103p";
 const DB_NAME = "shams-scan", CACHE_PFX = "shams-scan-", LS_PFX = "shams-", FLAVOR = "prod";
 </script>
 <script>
@@ -10646,8 +10646,8 @@ async function lookup(withSound) {
     const pi = sum(await localPending(code, cur.editId, 'issue')), pr = sum(await localPending(code, cur.editId, 'receipt'));
     const avail = (r[3] ?? 0) - (r[5] || 0) - pi + pr;
     box.innerHTML = `<div class="item"><div class="alert ok" style="margin:6px 0"><b>✓ ${esc(r[1])}</b><span class="code">${esc(code)}</span> · الموقع: ${esc(r[6] || '—')}</div>
-      <div class="kv"><div><small>الوحدة</small><span>${esc(r[2] || '—')}</span></div><div><small>الرصيد الدفتري</small><span>${fmt(r[3])}</span></div><div><small>صرف لم يُسجل (في الشيت)</small><span>${fmt(r[5] || 0)}</span></div>
-      <div><small>صرف على الموبايل</small><span>${fmt(pi)}</span></div><div><small>إضافة على الموبايل</small><span>${fmt(pr)}</span></div><div class="hi"><small>المتاح تقريبًا</small><span>${fmt(avail)} ${esc(r[2] || '')}</span></div></div>
+      <div class="kv"><div><small>الوحدة</small><span>${esc(r[2] || '—')}</span></div><div><small>رصيد السيستم</small><span>${fmt(r[3])}</span></div><div><small>صرف معلق في الشيت (ورقي + اسكانر)</small><span>${fmt(r[5] || 0)}</span></div>
+      <div><small>صرف على الموبايل</small><span>${fmt(pi)}</span></div><div><small>إضافة على الموبايل</small><span>${fmt(pr)}</span></div><div class="hi"><small>الرصيد الفعلي تقريبًا</small><span>${fmt(avail)} ${esc(r[2] || '')}</span></div></div>
       ${r[4] !== null && r[4] !== undefined ? `<p class="muted">الجرد الفعلي في الملف: ${fmt(r[4])}</p>` : ''}
       <p class="muted">الأرصدة من الدليل بتاريخ ${esc(CAT_DATE)} — مش لحظية.</p>
       <button class="btn ghost" id="cardFromScan" style="width:100%;margin-top:4px">📒 عرض حركة الصنف</button></div>`;
@@ -10894,14 +10894,14 @@ $('#catInput').onchange = async e => {
   paint(); const tick = setInterval(paint, 1000);
   const step = async t => { stepTxt = t; paint(); await new Promise(r => setTimeout(r, 0)); };
   try {
-    const {rows, workers, pos, moves, types, site, qsp, physCol, hdrRow} = await readStockSheet(f, step);
+    const {rows, workers, pos, moves, types, site, qsp, paper, physCol, hdrRow} = await readStockSheet(f, step);
     clearInterval(tick);
     if (rows.length < 10) throw new Error('لقيت ' + rows.length + ' صنف بس — اتأكد إنه ملف المخزن.');
     const d = new Date(f.lastModified || Date.now()); const ds = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
     await setMeta('catalog', {rows, date: ds, src: f.name, physCol, hdrRow, at: new Date().toISOString()});
     if (workers.length) await setMeta('workers', workers);
     await setMeta('pos', pos); POS = pos;
-    await setMeta('ledger', {moves: moves || [], types, site, qsp, ok: !!moves, date: ds, src: f.name}); LEDGER = null;
+    await setMeta('ledger', {moves: moves || [], types, site, qsp, paper, ok: !!moves, date: ds, src: f.name}); LEDGER = null;
     loadCat(rows, ds, f.name); fillRcpts(); fillSup();
     const okHtml = `<div class="alert ok"><b>✓ اتحدّث الدليل</b>${rows.length} صنف${workers.length ? ' و' + workers.length + ' اسم عامل' : ''}${moves ? ' و' + moves.length.toLocaleString('en-US') + ' حركة' : ''} من «${esc(f.name)}» — محفوظين على الموبايل ده بس.${moves ? '' : '<br>⚠ ما لقيتش شيت «المدخلات»، فكارت الصنف مش هيبقى فيه حركات.'}</div>`;
     msg.innerHTML = okHtml; $('#catMsg').innerHTML = okHtml; if (!$('#pScan').classList.contains('hide')) toast('✓ الدليل جاهز — تقدر تعمل اسكان');
@@ -10975,10 +10975,14 @@ async function readStockSheet(f, step = async () => {}) {
   await step('بقرا «الرصيد والجرد»');
   const grid = new Map(fastRows(await z[target]()));
   // header row: find by titles (row 5 in the current file)
-  const want = {code: 'كود الصنف', name: 'اسم الصنف', unit: 'الوحدة', bal: 'الرصيد الدفتري', phys: 'الجرد الفعلي', pend: 'صرف لم يُسجل', loc: 'كود الموقع'};
+  // column titles changed over time: accept the old and the new names
+  const want = {code: ['كود الصنف'], name: ['اسم الصنف'], unit: ['الوحدة'], bal: ['الرصيد الدفتري', 'الرصيد السيستم', 'رصيد السيستم'], phys: ['الجرد الفعلي'],
+    pend: ['صرف لم يُسجل', 'صرف لم يسجل', 'صرف معلق*'], loc: ['كود الموقع']};
+  const pick = (inv, names) => { for (const n of names) { if (n.endsWith('*')) { const k = Object.keys(inv).find(t => t.startsWith(n.slice(0, -1))); if (k) return inv[k]; } else if (inv[n]) return inv[n]; } return undefined; };
   let hr = null, cols = {};
-  for (const [rn, m] of grid) { if (rn > 15) break; const inv = {}; for (const [c, v] of Object.entries(m)) if (typeof v === 'string') inv[v.trim()] = c; if (inv[want.code] && inv[want.name] && inv[want.bal]) { hr = rn; for (const k in want) cols[k] = inv[want[k]]; break; } }
-  if (!hr) throw new Error('مش لاقي صف العناوين (كود الصنف / اسم الصنف / الرصيد الدفتري) في ورقة الرصيد والجرد.');
+  for (const [rn, m] of grid) { if (rn > 15) break; const inv = {}; for (const [c, v] of Object.entries(m)) if (typeof v === 'string') inv[v.trim()] = c;
+    if (pick(inv, want.code) && pick(inv, want.name) && pick(inv, want.bal)) { hr = rn; for (const k in want) cols[k] = pick(inv, want[k]); break; } }
+  if (!hr) throw new Error('مش لاقي صف العناوين (كود الصنف / اسم الصنف / الرصيد الدفتري أو الرصيد السيستم) في ورقة الرصيد والجرد.');
   const num = v => (v === null || v === undefined || v === '' || isNaN(Number(v))) ? null : Math.round(Number(v) * 1000) / 1000;
   const rows = [];
   for (const [rn, m] of [...grid].sort((a, b) => a[0] - b[0])) { if (rn <= hr) continue; const c = m[cols.code]; if (c === null || c === undefined || c === '') continue;
@@ -11011,6 +11015,13 @@ async function readStockSheet(f, step = async () => {}) {
     if (h) { const C = h.col; for (const [rn, o] of rws) { if (rn <= h.rn) continue; const code = o[C['كود الصنف (اسكان)']]; const q = Number(o[C['الكمية المصروفة']]);
       if (!code || !(q > 0) || String(o[C['اتسجل على السيستم؟']] ?? '').trim() === 'نعم') continue;
       qsp.push([String(code).trim(), typeof o[C['التاريخ']] === 'number' ? o[C['التاريخ']] : null, q, String(o[C['المستلم / الجهة']] ?? ''), String(o[C['رقم طلب الصرف']] ?? ''), rn]); } } } } catch (e) {}
+  // paper issue permits not yet posted on the company system («الأذون الورقية» — «معلق؟» = 1)
+  let paper = [];
+  try { const pp = sheetPath('الأذون الورقية'); if (pp && z[pp]) { await step('بقرا «الأذون الورقية»'); const rws = fastRows(await z[pp]()); const h = findHdr(rws, ['كود الصنف', 'معلق؟']);
+    if (h) { const C = h.col; const qk = Object.keys(C).find(t => t.startsWith('الكمية')); const sk = Object.keys(C).find(t => t.startsWith('رقم الإذن الورقي'));
+      for (const [rn, o] of rws) { if (rn <= h.rn) continue; const code = o[C['كود الصنف']]; const q = Number(o[C[qk]]);
+        if (!code || !(q > 0) || Number(o[C['معلق؟']]) !== 1) continue;
+        paper.push([String(code).trim(), typeof o[C['التاريخ']] === 'number' ? o[C['التاريخ']] : null, q, String(o[C['المهندس / المشرف']] ?? '').trim(), String(sk ? o[C[sk]] ?? '' : '').trim(), rn]); } } } } catch (e) {}
   // purchase orders («أوامر التوريد»): PO, code, supplier, PO qty, received, remaining — optional
   let pos = [];
   try { const pp = sheetPath('أوامر التوريد'); if (pp && z[pp]) { await step('بقرا «أوامر التوريد»'); let hr2 = null, c2 = {};
@@ -11020,7 +11031,7 @@ async function readStockSheet(f, step = async () => {}) {
       const po = m[c2.po], code = m[c2.code]; if (po === null || po === undefined || po === '' || !code) continue;
       pos.push({po: String(po), code: String(code), sup: String(m[c2.sup] ?? ''), qty: num(m[c2.qty]) || 0, rec: num(m[c2.rec]) || 0, rem: num(m[c2.rem]) ?? 0}); } } } catch (e) {}
   await step('بحفظ على الموبايل');
-  return {rows, workers: [...new Set(workers)], pos, moves, types, site, qsp, physCol: cols.phys || '', hdrRow: hr};
+  return {rows, workers: [...new Set(workers)], pos, moves, types, site, qsp, paper, physCol: cols.phys || '', hdrRow: hr};
 }
 
 // ---------------- stock movement card (read-only) ----------------
@@ -11099,6 +11110,7 @@ async function cardData(code, f) {
   // not yet in the file: «صرف سريع» rows not «نعم» + phone operations not found in the file
   const pend = [];
   for (const q of (L.qsp || []).filter(q => q[0] === code)) pend.push({src: 'صرف سريع — لسه ما اتسجلش على السيستم', d: q[1], doc: q[4], party: q[3], inq: 0, outq: q[2], key: 'qs' + q[5], m: q});
+  for (const q of (L.paper || []).filter(q => q[0] === code)) pend.push({src: 'إذن ورقي معلق — لسه متعملش على السيستم', d: q[1], doc: q[4], party: q[3], inq: 0, outq: q[2]});
   const ops = (await allOps()).filter(o => o.code === code);
   for (const o of ops) {
     if (opKind(o) === 'receipt') { const inFile = moves.some(m => m[4] === String(o.dn) && m[3] === (o.rtype || 'إذن استلام')); if (inFile) continue;
@@ -11300,7 +11312,11 @@ function expectedAt(code, ser, L, ops, S) {
     const d = q[1]; if (d === null || d <= ser || Math.floor(d) === day) { val -= q[2]; if (d !== null && Math.floor(d) === day) flags.push(`صرف سريع يوم العد من غير وقت (${q[4] || q[3]}) — اتحسب قبل العد`); if (d === null || d >= cut - 1e-9) during.push({d, type: 'صرف سريع', doc: q[4], q: -q[2]}); }
     else after.push({d, type: 'صرف سريع', doc: q[4], q: -q[2]});
   }
-  if (!used && L.ok === false) {} // nothing more
+  // paper permits not yet posted on the system («الأذون الورقية») — already out of the store physically
+  for (const q of (L.paper || []).filter(q => q[0] === code)) {
+    const d = q[1]; if (d === null || d <= ser || Math.floor(d) === day) { val -= q[2]; if (d !== null && Math.floor(d) === day) flags.push(`إذن ورقي يوم العد من غير وقت (${q[4]}) — اتحسب قبل العد`); if (d === null || d >= cut - 1e-9) during.push({d, type: 'إذن ورقي معلق', doc: q[4], q: -q[2]}); }
+    else after.push({d, type: 'إذن ورقي معلق', doc: q[4], q: -q[2]});
+  }
   // phone operations not exported yet
   for (const o of ops) { if (o.code !== code) continue;
     if (opKind(o) === 'receipt' && moves.some(m => m[4] === String(o.dn) && m[3] === (o.rtype || 'إذن استلام'))) continue;
@@ -11694,14 +11710,14 @@ async function exportPaste(S) {
   const S2 = await stkGet(S.id); if (!S2.settle) { toast('لازم مستند التسوية الأول'); return; }
   const c = await getMeta('catalog'); if (!c || !c.physCol || !c.rows.length || c.rows[0][7] === undefined) { toast('استورد ملف المخزن تاني من «تصدير وإعدادات» (النسخة دي محتاجة أرقام الصفوف).', 4500); return; }
   const by = new Map(c.rows.map(r => [r[0], r])); const missing = []; const out = [];
-  for (const x of S2.settle.lines) { const r = by.get(x.code); if (!r) { missing.push(x); continue; } const book = r[3] || 0; out.push({row: r[7], code: x.code, name: x.name, book, diff: x.diff, val: r3(book + x.diff)}); }
+  for (const x of S2.settle.lines) { const r = by.get(x.code); if (!r) { missing.push(x); continue; } const book = r[3] || 0; out.push({row: r[7], code: x.code, name: x.name, book, pend: r[5] || 0, diff: x.diff, val: r3(book - (r[5] || 0) + x.diff)}); }
   out.sort((a, b) => a.row - b.row);
   const colIdx = c.physCol.split('').reduce((a, ch) => a * 26 + ch.charCodeAt(0) - 64, 0) - 1;
   const at = [], rows = []; for (const o of out) { const row = []; row[colIdx] = o.val; rows.push(row); at.push(o.row); }
   const info = [['مستند التسوية', S2.settle.no], ['رقم الجرد', S2.no], ['اتحسب على ملف', c.src + ' بتاريخ ' + c.date], ['الطريقة', `حدد من ${c.physCol}${(c.hdrRow || 5) + 1} لحد آخر صف ← نسخ ← في «الرصيد والجرد» اقف على ${c.physCol}${(c.hdrRow || 5) + 1} ← لصق خاص ← قيم + تخطي الفراغات`],
-    ['ليه القيمة كده؟', 'القيمة = الرصيد الدفتري في الملف + فرق الجرد المعتمد، فعمود «الفرق» في الشيت هيطلع نفس الفرق المعتمد بالظبط حتى لو الرصيد اتحرك بعد العد.'], ['تنبيه', 'ده مش بيغيّر الرصيد الدفتري. تسجيل التسوية على السيستم إجراء منفصل.']];
+    ['ليه القيمة كده؟', 'القيمة = الرصيد في الملف − الصرف المعلق + فرق الجرد المعتمد، فعمود «الفرق» في الشيت (الجرد الفعلي − الرصيد الفعلي على الأرض) هيطلع نفس الفرق المعتمد بالظبط حتى لو الرصيد اتحرك بعد العد.'], ['تنبيه', 'ده مش بيغيّر الرصيد الدفتري. تسجيل التسوية على السيستم إجراء منفصل.']];
   if (missing.length) info.push(['أصناف مش لاقيها في الملف', missing.map(x => x.code).join('، ')]);
-  const detail = [['الصف في الشيت', 'كود الصنف', 'اسم الصنف', 'الرصيد الدفتري (الملف)', 'فرق الجرد المعتمد', 'القيمة في «الجرد الفعلي»']].concat(out.map(o => [o.row, {s: o.code}, o.name, o.book, o.diff, o.val]));
+  const detail = [['الصف في الشيت', 'كود الصنف', 'اسم الصنف', 'الرصيد (الملف)', 'الصرف المعلق', 'فرق الجرد المعتمد', 'القيمة في «الجرد الفعلي»']].concat(out.map(o => [o.row, {s: o.code}, o.name, o.book, o.pend, o.diff, o.val]));
   const blob = xlsxBook([{name: 'الجرد الفعلي — للصق', rows, at, noHdr: true, widths: Array(colIdx + 1).fill(12)}, {name: 'شرح', rows: info, noHdr: true, widths: [24, 110]}, {name: 'تفاصيل', title: 'تفاصيل ' + S2.settle.no, rows: detail, widths: [10, 26, 40, 16, 16, 18]}]);
   const fn = `الجرد_الفعلي_للصق_${S2.no}.xlsx`;
   if (await saveBlob(blob, fn, out.length + ' صنف')) await audit(S.id, 'paste-file', {info: fn + ' — ' + out.length + ' صنف — ملف ' + c.src});
